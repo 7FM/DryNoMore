@@ -1,4 +1,6 @@
 #include "config.hpp"
+
+#include "power_ctrl.hpp"
 #include "sleep.hpp"
 
 #include <Arduino.h>
@@ -7,15 +9,21 @@
 #define CONST_ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 // Vars
-static constexpr decltype(A0) moisturePins[] = MOISTURE_SENSOR_PINS;
-static constexpr decltype(A0) moisturePowerPins[] = MOISTURE_SENSOR_POWER_PINS;
-static constexpr decltype(A0) mosfetPins[] = MOSFET_PINS;
-static constexpr uint16_t moistureMin[] = MOISTURE_MIN_VALUES;
-static constexpr uint16_t moistureMax[] = MOISTURE_MAX_VALUES;
+static constexpr decltype(A0) moistSensPins[] = MOISTURE_SENSOR_PINS;
+static constexpr decltype(A0) waterSensPins[] = WATER_SENSOR_PINS;
+static constexpr uint16_t moistSensMin[] = MOISTURE_MIN_VALUES;
+static constexpr uint16_t moistSensMax[] = MOISTURE_MAX_VALUES;
 static constexpr uint8_t moistureTarget[] = MOISTURE_TARGETS;
+
+static constexpr uint8_t usedSensors = CONST_ARRAY_SIZE(moistureTarget);
+// Masks
+static constexpr uint16_t moistSensPwrMap[] = MOIST_SENS_PWR_MAPPING;
+static constexpr uint16_t waterSensPwrMap[] = WATER_SENS_PWR_MAPPING;
+static constexpr uint16_t pumpPwrMap[] = PUMP_PWR_MAPPING;
 
 // Global vars
 static bool hardwareFailure = false;
+static ShiftReg shiftReg;
 
 static int uint16_comp(const void *i1, const void *i2) {
     uint16_t val1 = *reinterpret_cast<const uint16_t *>(i1);
@@ -36,7 +44,7 @@ uint16_t adcMeasurement(uint8_t pin) {
 
     // sort the measurements
     // use the quicksort algorithm provided by the avr library
-    qsort(measurements, CONST_ARRAY_SIZE(measurements), sizeof(measurements[0]), uint16_comp);
+    qsort(measurements, (ADC_MEASUREMENTS), sizeof(measurements[0]), uint16_comp);
 
     // determine the median
     uint16_t median;
@@ -67,35 +75,44 @@ static inline bool isSoilTooDry(uint8_t pin, uint16_t min, uint16_t max, uint8_t
 }
 
 void checkMoisture(uint8_t idx) {
-    const auto powerPin = moisturePowerPins[idx];
-    digitalWrite(powerPin, HIGH);
-    _delay_ms(POWER_ON_DELAY_MS);
+    const auto pumpMask = pumpPwrMap[idx];
+    const auto moistPin = moistSensPins[idx];
+    const auto moistSensMask = moistSensPwrMap[idx];
+    const auto waterPin = waterSensPins[0]; //TODO use
+    const auto waterSensMask = waterSensPwrMap[0]; // TODO when to use sensor 2?
 
-    const auto pumpPin = mosfetPins[idx];
-    const auto pin = moisturePins[idx];
-    const auto min = moistureMin[idx];
-    const auto max = moistureMax[idx];
+    const auto min = moistSensMin[idx];
+    const auto max = moistSensMax[idx];
     const auto target = moistureTarget[idx];
+
+    shiftReg.update(moistSensMask | waterSensMask);
+    _delay_ms(POWER_ON_DELAY_MS);
+    bool isPumpActive = false;
 
     // timeout to ensure we are not stuck here forever (and flood the plants) in case of an defect sensor/pump
     constexpr long measurementDuration = (static_cast<long>(ADC_MEASUREMENTS) * (MEASURE_DELAY_MS));
     constexpr uint8_t timeoutCycles = (static_cast<long>(IRRIGATION_TIMEOUT_SEC) * 1000 + measurementDuration) / measurementDuration;
 
-    for (uint8_t cycle = 0; waterTankNotEmpty() && isSoilTooDry(pin, min, max, target); ++cycle) {
+    for (uint8_t cycle = 0; waterTankNotEmpty() && isSoilTooDry(moistPin, min, max, target); ++cycle) {
         if (cycle == timeoutCycles) {
             hardwareFailure = true;
             // TODO in case the timeout was triggered, we should ensure that the irrigation
             // wont be triggered again until the system was reset & the problem fixed by an user
             // TODO report error and prevent future execution!
+            shiftReg.disableOutput();
             break;
         }
-        // turn on the pump
-        digitalWrite(pumpPin, HIGH);
+        if (!isPumpActive) {
+            // turn on the pump
+            isPumpActive = true;
+            shiftReg.update(moistSensMask | waterSensMask | pumpMask);
+        }
     }
 
-    // Finally turn the power of the sensor and the pump off
-    digitalWrite(powerPin, LOW);
-    digitalWrite(pumpPin, LOW);
+    // Finally turn the power of the sensors and the pump off
+    shiftReg.disableOutput();
+    shiftReg.update(0);
+    shiftReg.enableOutput();
 }
 
 static void disableDigitalOnAnalogPins() {
@@ -106,11 +123,11 @@ static void disableDigitalOnAnalogPins() {
 
 void setup() {
     // Sanity checks
-    static_assert(CONST_ARRAY_SIZE(moisturePins) == CONST_ARRAY_SIZE(moisturePowerPins), "Each moisture sensor needs a dedicated power pin!");
-    static_assert(CONST_ARRAY_SIZE(moisturePins) == CONST_ARRAY_SIZE(mosfetPins), "You need to specify as many mosfet pins as available moisture sensors!");
-    static_assert(CONST_ARRAY_SIZE(moisturePins) == CONST_ARRAY_SIZE(moistureMin), "You need to specify as many min moisture values as available moisture sensors!");
-    static_assert(CONST_ARRAY_SIZE(moisturePins) == CONST_ARRAY_SIZE(moistureMax), "You need to specify as many max moisture values as available moisture sensors!");
-    static_assert(CONST_ARRAY_SIZE(moisturePins) == CONST_ARRAY_SIZE(moistureTarget), "You need to specify as many target moisture values as available moisture sensors!");
+    static_assert(CONST_ARRAY_SIZE(moistureTarget) == CONST_ARRAY_SIZE(moistSensMin), "You need to specify as many min moisture values as available moisture sensor targets!");
+    static_assert(CONST_ARRAY_SIZE(moistureTarget) == CONST_ARRAY_SIZE(moistSensMax), "You need to specify as many max moisture values as available moisture sensors targets!");
+    static_assert(CONST_ARRAY_SIZE(moistSensPins) == CONST_ARRAY_SIZE(moistSensPwrMap), "You need to specify as many moisture sensor pins as moisture sensor power control mappings!");
+    static_assert(CONST_ARRAY_SIZE(waterSensPins) == CONST_ARRAY_SIZE(waterSensPwrMap), "You need to specify as many water level sensor pins as water level sensor power control mappings!");
+    static_assert(usedSensors <= CONST_ARRAY_SIZE(pumpPwrMap), "Each configured moisture sensor needs one pump!");
 
     noInterrupts();
     // TODO reduce the clock speed for a lower power consumption
@@ -123,19 +140,19 @@ void setup() {
     CLKPR = _BV(CLKPS3);
     interrupts();
 
+    // TODO remove or wrap in a debug macro, we won't serial in the production code
     Serial.begin(9600);
 
-    for (uint8_t i = 0; i < CONST_ARRAY_SIZE(moisturePins); ++i) {
+    // TODO update!
+    for (uint8_t i = 0; i < CONST_ARRAY_SIZE(moistSensPins); ++i) {
         // initialize all pins
         // TODO does this result in a lower power consumption?
-        pinMode(moisturePins[i], INPUT_PULLUP);
-
-        pinMode(moisturePowerPins[i], OUTPUT);
-        pinMode(mosfetPins[i], OUTPUT);
-        // Turn the sensor off
-        digitalWrite(moisturePowerPins[i], LOW);
-        // Turn the pump off
-        digitalWrite(mosfetPins[i], LOW);
+        pinMode(moistSensPins[i], INPUT_PULLUP);
+    }
+    for (uint8_t i = 0; i < CONST_ARRAY_SIZE(waterSensPins); ++i) {
+        // initialize all pins
+        // TODO does this result in a lower power consumption?
+        pinMode(waterSensPins[i], INPUT_PULLUP);
     }
 
     disableDigitalOnAnalogPins();
@@ -143,8 +160,16 @@ void setup() {
 
 void loop() {
     // Check all plants!
-    for (uint8_t idx = 0; !hardwareFailure && idx < CONST_ARRAY_SIZE(moisturePins); ++idx) {
-        checkMoisture(idx);
+    if (!hardwareFailure) {
+        shiftReg.update(0);
+        shiftReg.enableOutput();
+
+        for (uint8_t idx = 0; !hardwareFailure && idx < usedSensors; ++idx) {
+            checkMoisture(idx);
+        }
+
+        shiftReg.disableOutput();
+        shiftReg.update(0);
     }
     longSleep<SLEEP_PERIOD_MIN>();
 }
