@@ -60,5 +60,14 @@
     { 200 } // TODO
 #define MOISTURE_MAX_VALUES \
     { 500 } // TODO
-#define MOISTURE_TARGETS \
+#define MOISTURE_TARGET_THRESHOLDS \
     { 50 } // TODO
+
+#define WATER_MIN_VALUES \
+    { 200 } // TODO
+#define WATER_MAX_VALUES \
+    { 500 } // TODO
+#define WATER_WARNING_THRESHOLDS \
+    { 50 } // TODO
+#define WATER_EMPTY_THRESHOLDS \
+    { 20 } // TODO
