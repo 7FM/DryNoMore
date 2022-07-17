@@ -1243,6 +1243,7 @@
   (no_connect (at 251.46 46.99) (uuid 74c1b240-4094-495a-a650-fb517276c4d4))
   (no_connect (at 113.03 30.48) (uuid 752d358f-16d7-4e1d-9ac7-e65ce976c123))
   (no_connect (at 135.89 67.31) (uuid 784466b6-cd18-4e42-a93f-7a7d444955dd))
+  (no_connect (at 238.76 57.15) (uuid 8ec8d390-3a2c-4bd5-8be9-b3881d2248d5))
   (no_connect (at 247.65 107.95) (uuid 916ed387-7a9e-4396-a70d-ad9f6ca976bc))
   (no_connect (at 35.56 31.75) (uuid c9f534ea-c703-48c0-966d-01383601ca18))
   (no_connect (at 35.56 34.29) (uuid c9f534ea-c703-48c0-966d-01383601ca19))
@@ -3388,24 +3389,6 @@
     (pin "1" (uuid 52df240d-0259-4344-81e3-1f5aebe21729))
   )
 
-  (symbol (lib_id "power:+3.3V") (at 238.76 57.15 90) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid c3587716-c418-445e-8f42-be54608d652f)
-    (property "Reference" "#PWR054" (id 0) (at 242.57 57.15 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "+3.3V" (id 1) (at 234.95 57.1499 90)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "" (id 2) (at 238.76 57.15 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 238.76 57.15 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid a321bdbc-14c3-4dba-bff6-395454fa1551))
-  )
-
   (symbol (lib_id "Device:R") (at 163.83 110.49 0) (unit 1)
     (in_bom yes) (on_board yes) (fields_autoplaced)
     (uuid c39b1fb9-006f-4fc7-bfcd-8fcafb167788)
@@ -3958,9 +3941,6 @@
     )
     (path "/a26554be-8401-41b7-bef1-b92cbb8403da"
       (reference "#PWR053") (unit 1) (value "+5V") (footprint "")
-    )
-    (path "/c3587716-c418-445e-8f42-be54608d652f"
-      (reference "#PWR054") (unit 1) (value "+3.3V") (footprint "")
     )
     (path "/1e09c4c6-70c4-4651-a160-9a2b937de738"
       (reference "#PWR055") (unit 1) (value "GND") (footprint "")
