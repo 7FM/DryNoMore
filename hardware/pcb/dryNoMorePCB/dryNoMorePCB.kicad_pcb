@@ -6487,7 +6487,7 @@
   (gr_text "S4" (at 139.2428 93.9546) (layer "F.SilkS") (tstamp 68bdf45a-585e-4019-b1c0-3109d029f710)
     (effects (font (size 1 1) (thickness 0.15)))
   )
-  (gr_text "PWR 0,7" (at 84.582 79.3242) (layer "F.SilkS") (tstamp 6cda4e75-748f-452b-a0fc-763cc1aa1d47)
+  (gr_text "PWRCTL 0,7" (at 84.582 79.3242) (layer "F.SilkS") (tstamp 6cda4e75-748f-452b-a0fc-763cc1aa1d47)
     (effects (font (size 1 1) (thickness 0.15)))
   )
   (gr_text "DryNoMore\nv0.1" (at 78.8416 104.6988) (layer "F.SilkS") (tstamp 6f405687-ba4c-4b20-8d93-b6c635d8a956)
