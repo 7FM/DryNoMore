@@ -1,6 +1,7 @@
 #include "config.hpp"
 
 #include "power_ctrl.hpp"
+#include "progmem_strings.hpp"
 #include "sleep.hpp"
 
 #include <Arduino.h>
@@ -68,18 +69,28 @@ uint16_t adcMeasurement(uint8_t pin) {
 
 static uint8_t clampedMeasurement(uint8_t pin, uint16_t min, uint16_t max) {
     uint16_t value = adcMeasurement(pin);
+    SERIALprintP(PSTR(" raw: "));
+    SERIALprint(value);
+    SERIALprintP(PSTR(" clamped: "));
     // clamp the value first
     value = constrain(value, min, max);
     uint8_t percentage = map(value, min, max, 0, 100);
+
+    SERIALprint(percentage);
+    SERIALprintP(PSTR(" % for pin: "));
+    SERIALprintln(pin);
+
     return percentage;
 }
 
 static inline bool isSoilTooDry(uint8_t pin, uint16_t min, uint16_t max, uint8_t target) {
+    SERIALprintP(PSTR("Measured soil moisture "));
     uint8_t moisturePercentage = clampedMeasurement(pin, min, max);
     return moisturePercentage < target;
 }
 
 static inline bool waterTankNotEmpty(uint8_t pin, uint16_t min, uint16_t max, uint8_t warning, uint8_t empty) {
+    SERIALprintP(PSTR("Measured water tank level "));
     uint8_t waterLevelPercentage = clampedMeasurement(pin, min, max);
     bool isEmpty = waterLevelPercentage < empty;
 
@@ -167,8 +178,7 @@ void setup() {
     CLKPR = _BV(CLKPS3);
     interrupts();
 
-    // TODO remove or wrap in a debug macro, we won't serial in the production code
-    Serial.begin(9600);
+    SERIALbegin(9600);
 
     // TODO update!
     for (uint8_t i = 0; i < usedMoistSens; ++i) {
@@ -186,6 +196,51 @@ void setup() {
 }
 
 void loop() {
+
+    // ===================================================================
+    // Setup modes
+    // ===================================================================
+#ifdef DUMP_SOIL_MOISTURES_MEASUREMENTS
+    for (uint8_t idx = 0; idx < usedMoistSens; ++idx) {
+        const auto moistPin = moistSensPins[idx];
+        const auto moistSensMask = moistSensPwrMap[idx];
+
+        const auto moistMin = moistSensMin[idx];
+        const auto moistMax = moistSensMax[idx];
+        const auto moistTarget = moistureTarget[idx];
+
+        shiftReg.update(moistSensMask);
+        shiftReg.enableOutput();
+        _delay_ms(POWER_ON_DELAY_MS);
+
+        isSoilTooDry(moistPin, moistMin, moistMax, moistTarget);
+
+        // Finally turn the power of the sensors and the pump off
+        shiftReg.disableOutput();
+    }
+#elif defined(DUMP_WATER_LEVEL_MEASUREMENTS)
+    for (uint8_t idx = 0; idx < usedWaterSens; ++idx) {
+        const auto waterPin = waterSensPins[idx];
+        const auto waterSensMask = waterSensPwrMap[idx];
+        const auto waterMin = waterSensMin[idx];
+        const auto waterMax = waterSensMax[idx];
+        const auto waterWarning = waterWarningThres[idx];
+        const auto waterEmpty = waterEmptyThres[idx];
+
+        shiftReg.update(waterSensMask);
+        shiftReg.enableOutput();
+        _delay_ms(POWER_ON_DELAY_MS);
+
+        waterTankNotEmpty(waterPin, waterMin, waterMax, waterWarning, waterEmpty);
+
+        // Finally turn the power of the sensors and the pump off
+        shiftReg.disableOutput();
+    }
+#else
+    // ===================================================================
+    // Production mode
+    // ===================================================================
+
     // Check all plants!
     if (!hardwareFailure) {
         shiftReg.update(0);
@@ -199,4 +254,5 @@ void loop() {
         shiftReg.update(0);
     }
     longSleep<SLEEP_PERIOD_MIN>();
+#endif
 }

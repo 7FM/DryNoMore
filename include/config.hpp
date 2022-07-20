@@ -1,5 +1,19 @@
 #pragma once
 
+// Configure modes
+// #define DUMP_SOIL_MOISTURES_MEASUREMENTS
+#ifndef DUMP_SOIL_MOISTURES_MEASUREMENTS
+#define DUMP_WATER_LEVEL_MEASUREMENTS
+#endif
+
+#if !defined(DUMP_SOIL_MOISTURES_MEASUREMENTS) && !defined(DUMP_WATER_LEVEL_MEASUREMENTS)
+// No serial needed 
+#define DISABLE_SERIAL
+#else
+#warning "Running in setup mode, this won't irrigate your flowers!"
+#warning "Disable both DUMP_SOIL_MOISTURES_MEASUREMENTS and DUMP_WATER_LEVEL_MEASUREMENTS in include/config.hpp to run in production mode"
+#endif
+
 // Config
 #define MEASURE_DELAY_MS 200
 #define POWER_ON_DELAY_MS 500
