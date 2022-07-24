@@ -1,0 +1,13 @@
+--- ./cores/arduino/Arduino.h
++++ ./cores/arduino/Arduino.h
+@@ -102,8 +102,8 @@
+ #define noInterrupts() cli()
+ 
+ #define clockCyclesPerMicrosecond() ( F_CPU / 1000000L )
+-#define clockCyclesToMicroseconds(a) ( (a) / clockCyclesPerMicrosecond() )
+-#define microsecondsToClockCycles(a) ( (a) * clockCyclesPerMicrosecond() )
++#define clockCyclesToMicroseconds(a) ((unsigned long)( (((uint64_t)(a)) * ((uint64_t) 1000000UL)) / F_CPU ))
++#define microsecondsToClockCycles(a) ((unsigned long)( (((uint64_t)(a)) * ((uint64_t) F_CPU)) / 1000000UL ))
+ 
+ #define lowByte(w) ((uint8_t) ((w) & 0xff))
+ #define highByte(w) ((uint8_t) ((w) >> 8))

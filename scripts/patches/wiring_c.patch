@@ -1,0 +1,11 @@
+--- ./cores/arduino/wiring.c
++++ ./cores/arduino/wiring.c
+@@ -100,7 +100,7 @@
+ 
+ 	SREG = oldSREG;
+ 	
+-	return ((m << 8) + t) * (64 / clockCyclesPerMicrosecond());
++	return ((m << 8) + t) * clockCyclesToMicroseconds(64);
+ }
+ 
+ void delay(unsigned long ms)
