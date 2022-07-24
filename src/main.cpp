@@ -74,7 +74,8 @@ static uint8_t clampedMeasurement(uint8_t pin, uint16_t min, uint16_t max) {
     SERIALprintP(PSTR(" clamped: "));
     // clamp the value first
     value = constrain(value, min, max);
-    uint8_t percentage = map(value, min, max, 0, 100);
+    // inverted mapping as an increase in moisture/water level results in a lower ADC value
+    uint8_t percentage = 100 - map(value, min, max, 0, 100);
 
     SERIALprint(percentage);
     SERIALprintP(PSTR(" % for pin: "));
