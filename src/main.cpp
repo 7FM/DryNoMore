@@ -1,7 +1,7 @@
 #include "config.hpp"
 
 #include "power_ctrl.hpp"
-#include "progmem_strings.hpp"
+#include "serial.hpp"
 #include "sleep.hpp"
 
 #include <Arduino.h>
@@ -85,13 +85,13 @@ static uint8_t clampedMeasurement(uint8_t pin, uint16_t min, uint16_t max) {
 }
 
 static inline bool isSoilTooDry(uint8_t pin, uint16_t min, uint16_t max, uint8_t target) {
-    SERIALprintP(PSTR("Measured soil moisture "));
+    SERIALprintP(PSTR("Measured soil moisture"));
     uint8_t moisturePercentage = clampedMeasurement(pin, min, max);
     return moisturePercentage < target;
 }
 
 static inline bool waterTankNotEmpty(uint8_t pin, uint16_t min, uint16_t max, uint8_t warning, uint8_t empty) {
-    SERIALprintP(PSTR("Measured water tank level "));
+    SERIALprintP(PSTR("Measured water tank level"));
     uint8_t waterLevelPercentage = clampedMeasurement(pin, min, max);
     bool isEmpty = waterLevelPercentage < empty;
 
@@ -179,7 +179,8 @@ void setup() {
     CLKPR = _BV(CLKPS3);
     interrupts();
 
-    SERIALbegin(9600);
+    //We can't increase the serial speed much with our low CPU frequency!
+    SERIALbegin(600);
 
     // TODO update!
     for (uint8_t i = 0; i < usedMoistSens; ++i) {
