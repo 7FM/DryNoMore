@@ -4,7 +4,6 @@
 
 #include <avr/pgmspace.h>
 
-
 #ifdef DISABLE_SERIAL
 #define SERIALprint(...)
 
@@ -19,6 +18,7 @@
 #define SERIALbegin(...)
 
 #else
+
 #define SERIALprint(...) \
     Serial.print(__VA_ARGS__)
 
@@ -39,5 +39,8 @@
 
 #endif
 
-#define SERIALprintP(str) SERIALprint(reinterpret_cast<const __FlashStringHelper *>(str))
-#define SERIALprintlnP(str) SERIALprintln(reinterpret_cast<const __FlashStringHelper *>(str))
+#define SERIALprintP(str) \
+    SERIALprint(reinterpret_cast<const __FlashStringHelper *>(str))
+
+#define SERIALprintlnP(str) \
+    SERIALprintln(reinterpret_cast<const __FlashStringHelper *>(str))
