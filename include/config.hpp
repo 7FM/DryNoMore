@@ -7,12 +7,15 @@
 #endif
 
 #if !defined(DUMP_SOIL_MOISTURES_MEASUREMENTS) && !defined(DUMP_WATER_LEVEL_MEASUREMENTS)
-// No serial needed 
+// No serial needed
 #define DISABLE_SERIAL
 #else
 #warning "Running in setup mode, this won't irrigate your flowers!"
 #warning "Disable both DUMP_SOIL_MOISTURES_MEASUREMENTS and DUMP_WATER_LEVEL_MEASUREMENTS in include/config.hpp to run in production mode"
 #endif
+
+//TODO SPI will be required for the Ethernet connection
+#define DISABLE_SPI
 
 // Config
 #define MEASURE_DELAY_MS 200
@@ -35,6 +38,19 @@
 
 #define WATER_SENSOR_PINS \
     { A0, A1 }
+
+#ifdef DISABLE_SERIAL
+#define FREE_DIGITAL_PINS              \
+    {                                  \
+        /*D*/0, /*D*/1,                \
+        /*D*/2, /*D*/3, /*D*/4, /*D*/5 \
+    }
+#else
+#define FREE_DIGITAL_PINS              \
+    {                                  \
+        /*D*/2, /*D*/3, /*D*/4, /*D*/5 \
+    }
+#endif
 
 // uint16_t shiftReg: P = Pump, M = moisture sensor, W = water sensor
 // { UNUSED_1, P1, P6, P5, P4, P3, P2, UNUSED_2, M6, W1, M3, M2, M1, M5, M4, W2 }

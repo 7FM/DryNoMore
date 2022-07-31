@@ -21,6 +21,8 @@ static constexpr uint16_t waterSensMax[] = WATER_MAX_VALUES;
 static constexpr uint8_t waterWarningThres[] = WATER_WARNING_THRESHOLDS;
 static constexpr uint8_t waterEmptyThres[] = WATER_EMPTY_THRESHOLDS;
 
+static constexpr decltype(A0) unusedDigitalPins[] = FREE_DIGITAL_PINS;
+
 static constexpr uint8_t usedMoistSens = CONST_ARRAY_SIZE(moistureTarget);
 static constexpr uint8_t usedWaterSens = CONST_ARRAY_SIZE(waterWarningThres);
 
@@ -168,30 +170,51 @@ void setup() {
     static_assert(CONST_ARRAY_SIZE(waterSensPins) == CONST_ARRAY_SIZE(waterSensPwrMap), "You need to specify as many water level sensor pins as water level sensor power control mappings!");
     static_assert(usedMoistSens <= CONST_ARRAY_SIZE(pumpPwrMap), "Each configured moisture sensor needs one pump!");
 
+    // reduce the clock speed for a lower power consumption
     noInterrupts();
-    // TODO reduce the clock speed for a lower power consumption
     // To avoid unintentional changes of clock frequency, a special write procedure must be followed to change the CLKPS bits:
     // 1. Write the clock prescaler change enable (CLKPCE) bit to one and all other bits in CLKPR to zero.
     CLKPR = _BV(CLKPCE);
     // 2. Within four cycles, write the desired value to CLKPS while writing a zero to CLKPCE.
     // division factor of 256!!! We are getting really really slow... 16 MHz / 256 = 62.5 kHz
-    // TODO check whether delay() resp. _delay_ms() accounts for these changes?
     CLKPR = _BV(CLKPS3);
     interrupts();
 
-    //We can't increase the serial speed much with our low CPU frequency!
+    // Turn off all unused modules:
+    // NOTE that you can not use delay(), millis(), etc. afterwards!
+    // Disable all timer interrupts:
+    TIMSK0 = 0; /*Disable Timer0 interrupts*/
+    TIMSK1 = 0; /*Disable Timer1 interrupts*/
+    TIMSK2 = 0; /*Disable Timer2 interrupts*/
+    // Power down modules:
+    PRR = _BV(PRTWI) /*Shutdown TWI*/ | _BV(PRTIM2) /*Shutdown Timer2*/ | _BV(PRTIM1) /*Shutdown Timer1*/ | _BV(PRTIM0) /*Shutdown Timer0*/
+#ifdef DISABLE_SPI
+          | _BV(PRSPI) /*Shutdown SPI*/
+#endif
+#ifdef DISABLE_SERIAL
+          | _BV(PRUSART0) /*Shutdown USART, needed for Hardware Serial*/
+#endif
+        ;
+
+    // We can't increase the serial speed much with our low CPU frequency!
     SERIALbegin(600);
 
     // TODO update!
-    for (uint8_t i = 0; i < usedMoistSens; ++i) {
-        // initialize all pins
-        // TODO does this result in a lower power consumption?
+    for (uint8_t i = usedMoistSens; i < CONST_ARRAY_SIZE(moistSensPins); ++i) {
+        // initialize all unused pins, setting this for used pins too results in invalid readings
+        // TODO prefer pullup input or rather output?
         pinMode(moistSensPins[i], INPUT_PULLUP);
     }
-    for (uint8_t i = 0; i < usedWaterSens; ++i) {
-        // initialize all pins
-        // TODO does this result in a lower power consumption?
+    for (uint8_t i = usedWaterSens; i < CONST_ARRAY_SIZE(waterSensPins); ++i) {
+        // initialize all unused pins, setting this for used pins too results in invalid readings
+        // TODO prefer pullup input or rather output?
         pinMode(waterSensPins[i], INPUT_PULLUP);
+    }
+    // Heavily discussed in https://arduino.stackexchange.com/questions/88319/power-saving-configuration-of-unconnected-pins
+    // TLDR; either INPUT_PULLUP or OUTPUT LOW where INPUT_PULLUP seems to suffer a bit from leak current
+    for (auto p : unusedDigitalPins) {
+        pinMode(p, OUTPUT);
+        digitalWrite(p, LOW);
     }
 
     disableDigitalOnAnalogPins();

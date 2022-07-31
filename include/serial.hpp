@@ -5,6 +5,8 @@
 #include <avr/pgmspace.h>
 
 #ifdef DISABLE_SERIAL
+#define SERIALflush()
+
 #define SERIALprint(...)
 
 #define SERIALprintln(...)
@@ -18,6 +20,8 @@
 #define SERIALbegin(...)
 
 #else
+#define SERIALflush() \
+    Serial.flush()
 
 #define SERIALprint(...) \
     Serial.print(__VA_ARGS__)
