@@ -7,7 +7,7 @@ namespace {
     static void enterSleepMode() {
         // what do we use to wake up again?
         // the Watchdog Timer seems to have its own oscillator and has a max delay of 8s
-        // maybe we can achieve longer sleeps with a normal timer and the slow system clock of 62.5 kHz
+        // maybe we can achieve longer sleeps with a normal timer and the slow system clock of 62.5 kHz: TLDR; no we can't!
         // the later would require a different sleep mode?
         // Timer2 can use clk_io if AS2 is set appropriately
         // it also allows for an additional prescaler of 1024 -> 62.5 kHz / 1024 = approx. 61 Hz -> 8 bit Timer -> approx. 4 seconds until the interrupt

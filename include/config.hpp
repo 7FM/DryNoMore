@@ -26,8 +26,6 @@
 // time between moisture checks: default every 6 hours
 #define SLEEP_PERIOD_MIN 6 * 60
 
-// TODO we could use the EEPROM for most of these parameters!
-
 #define SHIFT_REG_DATA_CLK_PIN 6
 #define SHIFT_REG_OUTPUT_UPDATE_PIN 7
 #define SHIFT_REG_OUTPUT_EN_PIN 8
@@ -86,6 +84,8 @@
         (static_cast<uint16_t>(1) << 15),   /* Unused 1 */ \
         (static_cast<uint16_t>(1) << 8)     /* Unused 2 */ \
     }
+
+// TODO we could use the EEPROM for the following parameters!
 
 #define MOISTURE_MIN_VALUES \
     { 200 } // TODO
