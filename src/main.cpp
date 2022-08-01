@@ -1,30 +1,17 @@
 #include "config.hpp"
 
+#include "macros.hpp"
 #include "power_ctrl.hpp"
 #include "serial.hpp"
+#include "settings.hpp"
 #include "sleep.hpp"
 
 #include <Arduino.h>
 
-// Helper macros
-#define CONST_ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
-
 // Consts
 static constexpr decltype(A0) moistSensPins[] = MOISTURE_SENSOR_PINS;
-static constexpr uint16_t moistSensMin[] = MOISTURE_MIN_VALUES;
-static constexpr uint16_t moistSensMax[] = MOISTURE_MAX_VALUES;
-static constexpr uint8_t moistureTarget[] = MOISTURE_TARGET_THRESHOLDS;
-
 static constexpr decltype(A0) waterSensPins[] = WATER_SENSOR_PINS;
-static constexpr uint16_t waterSensMin[] = WATER_MIN_VALUES;
-static constexpr uint16_t waterSensMax[] = WATER_MAX_VALUES;
-static constexpr uint8_t waterWarningThres[] = WATER_WARNING_THRESHOLDS;
-static constexpr uint8_t waterEmptyThres[] = WATER_EMPTY_THRESHOLDS;
-
 static constexpr decltype(A0) unusedDigitalPins[] = FREE_DIGITAL_PINS;
-
-static constexpr uint8_t usedMoistSens = CONST_ARRAY_SIZE(moistureTarget);
-static constexpr uint8_t usedWaterSens = CONST_ARRAY_SIZE(waterWarningThres);
 
 static constexpr uint16_t moistSensPwrMap[] = MOIST_SENS_PWR_MAPPING;
 static constexpr uint16_t waterSensPwrMap[] = WATER_SENS_PWR_MAPPING;
@@ -33,6 +20,7 @@ static constexpr uint16_t pumpPwrMap[] = PUMP_PWR_MAPPING;
 // Global vars
 static bool hardwareFailure = false;
 static ShiftReg shiftReg;
+static Settings settings;
 
 static int uint16_comp(const void *i1, const void *i2) {
     uint16_t val1 = *reinterpret_cast<const uint16_t *>(i1);
@@ -97,7 +85,7 @@ static inline bool waterTankNotEmpty(uint8_t pin, uint16_t min, uint16_t max, ui
     uint8_t waterLevelPercentage = clampedMeasurement(pin, min, max);
     bool isEmpty = waterLevelPercentage < empty;
 
-    if (waterLevelPercentage < warning) {
+    if (waterLevelPercentage <= warning) {
         // TODO notify somehow the user that we need more water!!!
     }
 
@@ -109,17 +97,20 @@ void checkMoisture(uint8_t idx) {
     const auto moistPin = moistSensPins[idx];
     const auto moistSensMask = moistSensPwrMap[idx];
 
-    const auto moistMin = moistSensMin[idx];
-    const auto moistMax = moistSensMax[idx];
-    const auto moistTarget = moistureTarget[idx];
+    const auto moistMin = settings.sensConfs[idx].minValue;
+    const auto moistMax = settings.sensConfs[idx].maxValue;
+    const auto moistTarget = settings.targetMoistures[idx];
 
-    // TODO when to use sensor 2?
-    const auto waterPin = waterSensPins[0];
-    const auto waterSensMask = waterSensPwrMap[0];
-    const auto waterMin = waterSensMin[0];
-    const auto waterMax = waterSensMax[0];
-    const auto waterWarning = waterWarningThres[0];
-    const auto waterEmpty = waterEmptyThres[0];
+    const uint8_t waterSensIdx = (settings.moistSensToWaterSensBitmap[idx / 8] >> idx) & 0x01;
+
+    const auto waterPin = waterSensPins[waterSensIdx];
+    const auto waterSensMask = waterSensPwrMap[waterSensIdx];
+
+    const uint8_t offsetIdx = (MAX_MOISTURE_SENSOR_COUNT) + waterSensIdx;
+    const auto waterMin = settings.sensConfs[offsetIdx].minValue;
+    const auto waterMax = settings.sensConfs[offsetIdx].maxValue;
+    const auto waterWarning = settings.waterLvlThres[waterSensIdx].warnThres;
+    const auto waterEmpty = settings.waterLvlThres[waterSensIdx].emptyThres;
 
     shiftReg.update(moistSensMask | waterSensMask);
     _delay_ms(POWER_ON_DELAY_MS);
@@ -161,14 +152,11 @@ static void disableDigitalOnAnalogPins() {
 
 void setup() {
     // Sanity checks
-    static_assert(CONST_ARRAY_SIZE(moistureTarget) == CONST_ARRAY_SIZE(moistSensMin), "You need to specify as many min moisture values as available moisture sensor targets!");
-    static_assert(CONST_ARRAY_SIZE(moistureTarget) == CONST_ARRAY_SIZE(moistSensMax), "You need to specify as many max moisture values as available moisture sensor targets!");
-    static_assert(CONST_ARRAY_SIZE(moistSensPins) == CONST_ARRAY_SIZE(moistSensPwrMap), "You need to specify as many moisture sensor pins as moisture sensor power control mappings!");
-    static_assert(CONST_ARRAY_SIZE(waterWarningThres) == CONST_ARRAY_SIZE(waterSensMin), "You need to specify as many min water level values as available water sensor targets!");
-    static_assert(CONST_ARRAY_SIZE(waterWarningThres) == CONST_ARRAY_SIZE(waterSensMax), "You need to specify as many max water level values as available water sensor targets!");
-    static_assert(CONST_ARRAY_SIZE(waterWarningThres) == CONST_ARRAY_SIZE(waterEmptyThres), "You need to specify as many empty water level values as available water sensor targets!");
-    static_assert(CONST_ARRAY_SIZE(waterSensPins) == CONST_ARRAY_SIZE(waterSensPwrMap), "You need to specify as many water level sensor pins as water level sensor power control mappings!");
-    static_assert(usedMoistSens <= CONST_ARRAY_SIZE(pumpPwrMap), "Each configured moisture sensor needs one pump!");
+    static_assert(CONST_ARRAY_SIZE(moistSensPins) == CONST_ARRAY_SIZE(moistSensPwrMap));
+    static_assert(CONST_ARRAY_SIZE(moistSensPins) == (MAX_MOISTURE_SENSOR_COUNT));
+    static_assert(CONST_ARRAY_SIZE(waterSensPins) == CONST_ARRAY_SIZE(waterSensPwrMap));
+    static_assert(CONST_ARRAY_SIZE(waterSensPins) == 2);
+    static_assert((MAX_MOISTURE_SENSOR_COUNT) == CONST_ARRAY_SIZE(pumpPwrMap));
 
     // reduce the clock speed for a lower power consumption
     noInterrupts();
@@ -198,12 +186,22 @@ void setup() {
 
     // We can't increase the serial speed much with our low CPU frequency!
     SERIALbegin(600);
+    defaultInitSettings(settings);
 
     // TODO update!
-    for (uint8_t i = usedMoistSens; i < CONST_ARRAY_SIZE(moistSensPins); ++i) {
+    for (uint8_t i = 0; i < settings.numPlants; ++i) {
+        // TODO rather use INPUT_PULLUP / OUTPUT and change right before turning on the power of the sensor???
+        pinMode(moistSensPins[i], INPUT);
+    }
+    for (uint8_t i = settings.numPlants; i < CONST_ARRAY_SIZE(moistSensPins); ++i) {
         // initialize all unused pins, setting this for used pins too results in invalid readings
         // TODO prefer pullup input or rather output?
         pinMode(moistSensPins[i], INPUT_PULLUP);
+    }
+    const uint8_t usedWaterSens = getUsedWaterSens(settings);
+    for (uint8_t i = 0; i < usedWaterSens; ++i) {
+        // TODO rather use INPUT_PULLUP / OUTPUT and change right before turning on the power of the sensor???
+        pinMode(waterSensPins[i], INPUT);
     }
     for (uint8_t i = usedWaterSens; i < CONST_ARRAY_SIZE(waterSensPins); ++i) {
         // initialize all unused pins, setting this for used pins too results in invalid readings
@@ -226,13 +224,13 @@ void loop() {
     // Setup modes
     // ===================================================================
 #ifdef DUMP_SOIL_MOISTURES_MEASUREMENTS
-    for (uint8_t idx = 0; idx < usedMoistSens; ++idx) {
+    for (uint8_t idx = 0; idx < settings.numPlants; ++idx) {
         const auto moistPin = moistSensPins[idx];
         const auto moistSensMask = moistSensPwrMap[idx];
 
-        const auto moistMin = moistSensMin[idx];
-        const auto moistMax = moistSensMax[idx];
-        const auto moistTarget = moistureTarget[idx];
+        const auto moistMin = settings.sensConfs[idx].minValue;
+        const auto moistMax = settings.sensConfs[idx].maxValue;
+        const auto moistTarget = settings.targetMoistures[idx];
 
         shiftReg.update(moistSensMask);
         shiftReg.enableOutput();
@@ -244,13 +242,16 @@ void loop() {
         shiftReg.disableOutput();
     }
 #elif defined(DUMP_WATER_LEVEL_MEASUREMENTS)
+    const uint8_t usedWaterSens = getUsedWaterSens(settings);
     for (uint8_t idx = 0; idx < usedWaterSens; ++idx) {
         const auto waterPin = waterSensPins[idx];
         const auto waterSensMask = waterSensPwrMap[idx];
-        const auto waterMin = waterSensMin[idx];
-        const auto waterMax = waterSensMax[idx];
-        const auto waterWarning = waterWarningThres[idx];
-        const auto waterEmpty = waterEmptyThres[idx];
+
+        const uint8_t offsetIdx = (MAX_MOISTURE_SENSOR_COUNT) + idx;
+        const auto waterMin = settings.sensConfs[offsetIdx].minValue;
+        const auto waterMax = settings.sensConfs[offsetIdx].maxValue;
+        const auto waterWarning = settings.waterLvlThres[idx].warnThres;
+        const auto waterEmpty = settings.waterLvlThres[idx].emptyThres;
 
         shiftReg.update(waterSensMask);
         shiftReg.enableOutput();
@@ -271,7 +272,7 @@ void loop() {
         shiftReg.update(0);
         shiftReg.enableOutput();
 
-        for (uint8_t idx = 0; !hardwareFailure && idx < usedMoistSens; ++idx) {
+        for (uint8_t idx = 0; !hardwareFailure && idx < settings.numPlants; ++idx) {
             checkMoisture(idx);
         }
 

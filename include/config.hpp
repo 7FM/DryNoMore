@@ -14,7 +14,7 @@
 #warning "Disable both DUMP_SOIL_MOISTURES_MEASUREMENTS and DUMP_WATER_LEVEL_MEASUREMENTS in include/config.hpp to run in production mode"
 #endif
 
-//TODO SPI will be required for the Ethernet connection
+// TODO SPI will be required for the Ethernet connection
 #define DISABLE_SPI
 
 // Config
@@ -24,7 +24,7 @@
 #define IRRIGATION_TIMEOUT_SEC 20
 
 // time between moisture checks: default every 6 hours
-#define SLEEP_PERIOD_MIN 6 * 60
+#define SLEEP_PERIOD_MIN static_cast<uint16_t>(6) * 60
 
 #define SHIFT_REG_DATA_CLK_PIN 6
 #define SHIFT_REG_OUTPUT_UPDATE_PIN 7
@@ -85,20 +85,20 @@
         (static_cast<uint16_t>(1) << 8)     /* Unused 2 */ \
     }
 
-// TODO we could use the EEPROM for the following parameters!
+#define DEFAULT_NUM_PLANTS 1
 
-#define MOISTURE_MIN_VALUES \
-    { 200 } // TODO
-#define MOISTURE_MAX_VALUES \
-    { 500 } // TODO
-#define MOISTURE_TARGET_THRESHOLDS \
-    { 50 } // TODO
+#define DEFAULT_MOISTURE_MIN_VALUES \
+    { 200, 200, 200, 200, 200, 200 }
+#define DEFAULT_MOISTURE_MAX_VALUES \
+    { 500, 500, 500, 500, 500, 500 }
+#define DEFAULT_MOISTURE_TARGET_THRESHOLDS \
+    { 50, 50, 50, 50, 50, 50 }
 
-#define WATER_MIN_VALUES \
-    { 200 } // TODO
-#define WATER_MAX_VALUES \
-    { 500 } // TODO
-#define WATER_WARNING_THRESHOLDS \
-    { 50 } // TODO
-#define WATER_EMPTY_THRESHOLDS \
-    { 20 } // TODO
+#define DEFAULT_WATER_MIN_VALUES \
+    { 180, 180 }
+#define DEFAULT_WATER_MAX_VALUES \
+    { 480, 480 }
+#define DEFAULT_WATER_WARNING_THRESHOLDS \
+    { 50, 50 }
+#define DEFAULT_WATER_EMPTY_THRESHOLDS \
+    { 20, 20 }
