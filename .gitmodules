@@ -1,0 +1,3 @@
+[submodule "lib/Ethernet"]
+	path = lib/Ethernet
+	url = https://github.com/7FM/Ethernet.git
