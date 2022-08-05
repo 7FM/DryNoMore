@@ -17,6 +17,19 @@
 // TODO SPI will be required for the Ethernet connection
 #define DISABLE_SPI
 
+#define USE_ETHERNET
+#ifdef USE_ETHERNET
+
+#define MAC_ADDRESS {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED}
+
+#define LOCAL_NETWORK_SUBNET 192, 168, 0
+#define FALLBACK_IP LOCAL_NETWORK_SUBNET, 254
+#define FALLBACK_DNS LOCAL_NETWORK_SUBNET, 1
+#define LOCAL_SERVER_IP LOCAL_NETWORK_SUBNET, 42
+#define LOCAL_SERVER_PORT 12345
+
+#endif
+
 // Config
 #define MEASURE_DELAY_MS 200
 #define POWER_ON_DELAY_MS 500

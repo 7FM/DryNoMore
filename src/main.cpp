@@ -5,6 +5,7 @@
 #include "serial.hpp"
 #include "settings.hpp"
 #include "sleep.hpp"
+#include "lan.hpp"
 
 #include <Arduino.h>
 
@@ -85,8 +86,12 @@ static inline bool waterTankNotEmpty(uint8_t pin, uint16_t min, uint16_t max, ui
     uint8_t waterLevelPercentage = clampedMeasurement(pin, min, max);
     bool isEmpty = waterLevelPercentage < empty;
 
-    if (waterLevelPercentage <= warning) {
+    if (isEmpty) {
+        // TODO send error to user that the tank is empty!
+        sendErrorWaterEmpty();
+    } else if (waterLevelPercentage <= warning) {
         // TODO notify somehow the user that we need more water!!!
+        sendWarning();
     }
 
     return !isEmpty;
@@ -125,9 +130,7 @@ void checkMoisture(uint8_t idx) {
          ++cycle) {
         if (cycle == timeoutCycles) {
             hardwareFailure = true;
-            // TODO in case the timeout was triggered, we should ensure that the irrigation
-            // wont be triggered again until the system was reset & the problem fixed by an user
-            // TODO report error and prevent future execution!
+            sendErrorHardware();
             shiftReg.disableOutput();
             break;
         }
@@ -268,7 +271,12 @@ void loop() {
     // ===================================================================
 
     // Check all plants!
+    //TODO allow remote reseting hardware failure?
+    //TODO add skip setting to skip certain plants as immediate workaround of hardware problems?
     if (!hardwareFailure) {
+        initEthernet();
+        updateSettings(settings);
+
         shiftReg.update(0);
         shiftReg.enableOutput();
 
@@ -278,6 +286,8 @@ void loop() {
 
         shiftReg.disableOutput();
         shiftReg.update(0);
+        sendStatus();
+        deinitEthernet();
     }
     longSleep<SLEEP_PERIOD_MIN>();
 #endif
