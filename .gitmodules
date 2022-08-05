@@ -1,3 +1,6 @@
 [submodule "lib/Ethernet"]
 	path = lib/Ethernet
 	url = https://github.com/7FM/Ethernet.git
+[submodule "server/telegram_bot/lib/tgbot-cpp"]
+	path = server/telegram_bot/lib/tgbot-cpp
+	url = https://github.com/reo7sp/tgbot-cpp
