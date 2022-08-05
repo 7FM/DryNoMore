@@ -31,6 +31,10 @@
 #endif
 
 // Config
+
+// We can't increase the serial speed much with our low CPU frequency!
+#define SERIAL_BAUD_RATE 600
+
 #define MEASURE_DELAY_MS 200
 #define POWER_ON_DELAY_MS 500
 #define ADC_MEASUREMENTS 5

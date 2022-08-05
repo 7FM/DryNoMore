@@ -187,8 +187,7 @@ void setup() {
 #endif
         ;
 
-    // We can't increase the serial speed much with our low CPU frequency!
-    SERIALbegin(600);
+    SERIALbegin(SERIAL_BAUD_RATE);
     defaultInitSettings(settings);
 
     // TODO update!
@@ -274,7 +273,7 @@ void loop() {
     //TODO allow remote reseting hardware failure?
     //TODO add skip setting to skip certain plants as immediate workaround of hardware problems?
     if (!hardwareFailure) {
-        initEthernet();
+        initEthernet(); // TODO enable Ethernet only on demand!
         updateSettings(settings);
 
         shiftReg.update(0);

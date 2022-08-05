@@ -53,6 +53,7 @@ void longSleep() {
     ACSR |= _BV(ACD);
 
     SERIALflush();
+    SERIALend();
 
     // Save the PRR register
     uint8_t prevPRR = PRR;
@@ -71,4 +72,6 @@ void longSleep() {
 
     // enable ADC again
     ADCSRA |= _BV(ADEN);
+
+    SERIALbegin(SERIAL_BAUD_RATE);
 }

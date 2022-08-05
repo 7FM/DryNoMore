@@ -18,6 +18,7 @@
 #define SERIALwrite(...)
 
 #define SERIALbegin(...)
+#define SERIALend(...)
 
 #else
 #define SERIALflush() \
@@ -40,6 +41,9 @@
 
 #define SERIALbegin(...) \
     Serial.begin(__VA_ARGS__)
+
+#define SERIALend() \
+    Serial.end()
 
 #endif
 
