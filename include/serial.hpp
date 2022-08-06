@@ -22,36 +22,27 @@
 #define SERIALend(...)
 
 #else
-#define SERIALflush() \
-    Serial.flush()
+#define SERIALflush() Serial.flush()
 
-#define SERIALprint(...) \
-    Serial.print(__VA_ARGS__)
+#define SERIALprint(...) Serial.print(__VA_ARGS__)
 
-#define SERIALprintln(...) \
-    Serial.println(__VA_ARGS__)
+#define SERIALprintln(...) Serial.println(__VA_ARGS__)
 
-#define SERIALavailable() \
-    Serial.available()
+#define SERIALavailable() Serial.available()
 
-#define SERIALparseInt(...) \
-    Serial.parseInt(__VA_ARGS__)
+#define SERIALparseInt(...) Serial.parseInt(__VA_ARGS__)
 
-#define SERIALwrite(...) \
-    Serial.write(__VA_ARGS__)
-#define SERIALreadBytes(...) \
-    Serial.readBytes(__VA_ARGS__)
+#define SERIALwrite(...) Serial.write(__VA_ARGS__)
+#define SERIALreadBytes(...) Serial.readBytes(__VA_ARGS__)
 
-#define SERIALbegin(...) \
-    Serial.begin(__VA_ARGS__)
+#define SERIALbegin(...) Serial.begin(__VA_ARGS__)
 
-#define SERIALend() \
-    Serial.end()
+#define SERIALend() Serial.end()
 
 #endif
 
-#define SERIALprintP(str) \
-    SERIALprint(reinterpret_cast<const __FlashStringHelper *>(str))
+#define SERIALprintP(str)                                                      \
+  SERIALprint(reinterpret_cast<const __FlashStringHelper *>(str))
 
-#define SERIALprintlnP(str) \
-    SERIALprintln(reinterpret_cast<const __FlashStringHelper *>(str))
+#define SERIALprintlnP(str)                                                    \
+  SERIALprintln(reinterpret_cast<const __FlashStringHelper *>(str))
