@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 cmake_minimum_required(VERSION 3.12)
 project(drynomore-telegram-bot CXX)
 
+find_package (Threads REQUIRED)
+
 # Source & Header files
 file(GLOB_RECURSE cppHeader CONFIGURE_DEPENDS
 "include/*.hpp"
@@ -35,5 +37,5 @@ target_include_directories(${PROJECT_NAME}
 PRIVATE "include/"
 )
 
-target_link_libraries(${PROJECT_NAME} TgBot)
+target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} TgBot)
 
