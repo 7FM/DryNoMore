@@ -16,6 +16,7 @@
 #define SERIALparseInt(...) 0
 
 #define SERIALwrite(...)
+#define SERIALreadBytes(...)
 
 #define SERIALbegin(...)
 #define SERIALend(...)
@@ -38,6 +39,8 @@
 
 #define SERIALwrite(...) \
     Serial.write(__VA_ARGS__)
+#define SERIALreadBytes(...) \
+    Serial.readBytes(__VA_ARGS__)
 
 #define SERIALbegin(...) \
     Serial.begin(__VA_ARGS__)
