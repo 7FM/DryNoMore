@@ -22,7 +22,8 @@
 #define USE_ETHERNET
 #ifdef USE_ETHERNET
 
-#define MAC_ADDRESS {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED}
+#define MAC_ADDRESS                                                            \
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }
 
 #define LOCAL_NETWORK_SUBNET 192, 168, 0
 #define FALLBACK_IP LOCAL_NETWORK_SUBNET, 254
@@ -37,7 +38,8 @@
 // We can't increase the serial speed much with our low CPU frequency!
 #define SERIAL_BAUD_RATE 600
 // TODO investigate/adjust! I seriously doubt that we can use 14 MHz if the CPU
-// runs at 62.5 kHz
+// runs at 62.5 kHz -> SPI cna run at max at F_CPU/2 speed, but the library
+// handles this correctly, so no need to change the setting!
 #define SPI_ETHERNET_SETTINGS SPISettings(14000000, MSBFIRST, SPI_MODE0)
 
 #define MEASURE_DELAY_MS 200
