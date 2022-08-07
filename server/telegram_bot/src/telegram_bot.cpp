@@ -97,19 +97,22 @@ static std::string generateSettingsTable(const Settings &settings) {
   std::vector<std::vector<std::string>> table;
   table.reserve(1 + settings.numPlants);
 
-  std::vector<std::string> row{"ID", "Min\nValue", "Max\nValue",
-                               "Target\nMoisture", "Water\nSensor"};
+  std::vector<std::string> row{
+      "ID", "Min\nVal", "Max\nVal", "Target\nMoist", "Water\nSensor", "Skip"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < settings.numPlants; ++i) {
     uint8_t sensorIdx =
         (settings.moistSensToWaterSensBitmap[i / 8] >> (i & 7 /*aka mod 8*/)) &
         0x01;
+    uint8_t skip = (settings.skipBitmap[i / 8] >> (i & 7 /*aka mod 8*/)) & 0x01;
     std::string waterSensor = sensorIdx ? "W2" : "W1";
     row = {"P" + std::to_string(i + 1),
            std::to_string(settings.sensConfs[i].minValue),
            std::to_string(settings.sensConfs[i].maxValue),
-           std::to_string(settings.targetMoistures[i]) + " %", waterSensor};
+           std::to_string(settings.targetMoistures[i]) + " %",
+           waterSensor,
+           skip ? "true" : "false"};
     table.push_back(std::move(row));
   }
 
@@ -117,8 +120,7 @@ static std::string generateSettingsTable(const Settings &settings) {
 
   table.clear();
 
-  row = {"ID", "Min\nValue", "Max\nValue", "Warning\nThreshold",
-         "Empty\nThreshold"};
+  row = {"ID", "Min\nVal", "Max\nVal", "Warn\nThres", "Empty\nThres"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < 2; ++i) {
