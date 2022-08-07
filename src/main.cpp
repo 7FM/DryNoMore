@@ -128,16 +128,7 @@ static void disableDigitalOnAnalogPins() {
   DIDR1 = _BV(AIN0D) | _BV(AIN1D);
 }
 
-void setup() {
-  // Sanity checks
-  static_assert(CONST_ARRAY_SIZE(moistSensPins) ==
-                CONST_ARRAY_SIZE(moistSensPwrMap));
-  static_assert(CONST_ARRAY_SIZE(moistSensPins) == (MAX_MOISTURE_SENSOR_COUNT));
-  static_assert(CONST_ARRAY_SIZE(waterSensPins) ==
-                CONST_ARRAY_SIZE(waterSensPwrMap));
-  static_assert(CONST_ARRAY_SIZE(waterSensPins) == 2);
-  static_assert((MAX_MOISTURE_SENSOR_COUNT) == CONST_ARRAY_SIZE(pumpPwrMap));
-
+static void powerSavingSettings() {
   // reduce the clock speed for a lower power consumption
   noInterrupts();
   // To avoid unintentional changes of clock frequency, a special write
@@ -167,6 +158,21 @@ void setup() {
         | _BV(PRUSART0) /*Shutdown USART, needed for Hardware Serial*/
 #endif
       ;
+
+  disableDigitalOnAnalogPins();
+}
+
+void setup() {
+  // Sanity checks
+  static_assert(CONST_ARRAY_SIZE(moistSensPins) ==
+                CONST_ARRAY_SIZE(moistSensPwrMap));
+  static_assert(CONST_ARRAY_SIZE(moistSensPins) == (MAX_MOISTURE_SENSOR_COUNT));
+  static_assert(CONST_ARRAY_SIZE(waterSensPins) ==
+                CONST_ARRAY_SIZE(waterSensPwrMap));
+  static_assert(CONST_ARRAY_SIZE(waterSensPins) == 2);
+  static_assert((MAX_MOISTURE_SENSOR_COUNT) == CONST_ARRAY_SIZE(pumpPwrMap));
+
+  powerSavingSettings();
 
   SERIALbegin(SERIAL_BAUD_RATE);
   defaultInitSettings(settings);
@@ -204,8 +210,6 @@ void setup() {
     pinMode(p, OUTPUT);
     digitalWrite(p, LOW);
   }
-
-  disableDigitalOnAnalogPins();
 }
 
 void loop() {
