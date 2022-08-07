@@ -15,23 +15,27 @@ generateTable(const std::vector<std::vector<std::string>> &table) {
   std::vector<size_t> maxChars;
   maxChars.reserve(table.size());
 
-  size_t totalWidth = 0;
+  size_t totalWidth = 1;
   for (size_t i = 0; i < table[0].size(); ++i) {
     size_t max = 0;
     for (auto &row : table) {
       max = std::max(max, row[i].size());
     }
-    totalWidth += max + 4;
+    totalWidth += max + 3;
     maxChars.push_back(max);
   }
 
-  std::stringstream ss("```");
+  std::stringstream ss;
+  ss << "```\n";
 
   auto print_row = [&](const std::vector<std::string> &row) {
     ss << "|";
     for (size_t i = 0; i < maxChars.size(); ++i) {
-      ss.width(maxChars[i]);
-      ss << (' ' + row[i]) << " |";
+      ss << ' ';
+      auto old = ss.width(maxChars[i]);
+      ss << row[i];
+      ss.width(old);
+      ss << " |";
     }
     ss << '\n';
   };
