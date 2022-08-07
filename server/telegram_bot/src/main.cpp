@@ -25,6 +25,31 @@ int main() {
   uint16_t tcpPort = 42424 /*SELECT YOUR SERVER TCP PORT HERE*/;
 
   StateWrapper state;
+
+#define DEBUG_SETTINGS // TODO remove
+#ifdef DEBUG_SETTINGS
+  state.settingsWrap.valid = true;
+  state.settingsWrap.settings.numPlants = 2;
+  state.settingsWrap.settings.sensConfs[0].minValue = 100;
+  state.settingsWrap.settings.sensConfs[0].maxValue = 500;
+  state.settingsWrap.settings.sensConfs[1].minValue = 101;
+  state.settingsWrap.settings.sensConfs[1].maxValue = 501;
+  state.settingsWrap.settings.moistSensToWaterSensBitmap[0] = 0b010;
+  state.settingsWrap.settings.skipBitmap[0] = 0b10;
+  state.settingsWrap.settings.sensConfs[(MAX_MOISTURE_SENSOR_COUNT) + 0]
+      .minValue = 100;
+  state.settingsWrap.settings.sensConfs[(MAX_MOISTURE_SENSOR_COUNT) + 0]
+      .maxValue = 500;
+  state.settingsWrap.settings.sensConfs[(MAX_MOISTURE_SENSOR_COUNT) + 1]
+      .minValue = 101;
+  state.settingsWrap.settings.sensConfs[(MAX_MOISTURE_SENSOR_COUNT) + 1]
+      .maxValue = 501;
+  state.settingsWrap.settings.waterLvlThres[0].warnThres = 50;
+  state.settingsWrap.settings.waterLvlThres[0].emptyThres = 10;
+  state.settingsWrap.settings.waterLvlThres[1].warnThres = 49;
+  state.settingsWrap.settings.waterLvlThres[1].emptyThres = 11;
+#endif
+
   ts_queue<Message> msgQueue;
 
   SocketRAII socket(tcpPort);
