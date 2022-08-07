@@ -10,6 +10,7 @@
     in rec {
       devShell = pkgs.mkShell {
         nativeBuildInputs = with pkgs; [
+          gdb
           gnumake
           cmake
           openssl
