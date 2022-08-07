@@ -5,6 +5,18 @@
 
 #include "telegram_bot.hpp"
 
+static size_t findMaxStringLineSize(const std::string &s) {
+  size_t max = 0;
+  auto it = s.find('\n');
+  if (it != std::string::npos) {
+    max = std::max(it, findMaxStringLineSize(s.substr(it + 1)));
+  } else {
+    max = s.size();
+  }
+
+  return max;
+}
+
 static std::string
 generateTable(const std::vector<std::vector<std::string>> &table) {
 
@@ -19,7 +31,7 @@ generateTable(const std::vector<std::vector<std::string>> &table) {
   for (size_t i = 0; i < table[0].size(); ++i) {
     size_t max = 0;
     for (auto &row : table) {
-      max = std::max(max, row[i].size());
+      max = std::max(max, findMaxStringLineSize(row[i]));
     }
     totalWidth += max + 3;
     maxChars.push_back(max);
@@ -28,16 +40,37 @@ generateTable(const std::vector<std::vector<std::string>> &table) {
   std::stringstream ss;
   ss << "```\n";
 
-  auto print_row = [&](const std::vector<std::string> &row) {
-    ss << "|";
-    for (size_t i = 0; i < maxChars.size(); ++i) {
-      ss << ' ';
-      auto old = ss.width(maxChars[i]);
-      ss << row[i];
-      ss.width(old);
-      ss << " |";
-    }
-    ss << '\n';
+  auto print_multirow = [&](const std::vector<std::string> &row) {
+    std::vector<std::string> newRow;
+    std::vector<std::string> nextRow;
+    const std::vector<std::string> *currentRow = &row;
+
+    do {
+      ss << "|";
+      for (size_t i = 0; i < maxChars.size(); ++i) {
+        ss << ' ';
+        auto old = ss.width(maxChars[i]);
+        const auto &s = (*currentRow)[i];
+        auto it = s.find('\n');
+        if (it != std::string::npos) {
+          if (newRow.size() != i) {
+            // Fill with empty strings up to i
+            newRow.resize(i);
+          }
+          ss << s.substr(0, it);
+          newRow.push_back(s.substr(it + 1));
+        } else {
+          ss << s;
+        }
+        ss.width(old);
+        ss << " |";
+      }
+      ss << '\n';
+
+      std::swap(nextRow, newRow);
+      newRow.clear();
+      currentRow = &nextRow;
+    } while (!currentRow->empty());
   };
 
   auto print_break = [&] {
@@ -49,10 +82,10 @@ generateTable(const std::vector<std::vector<std::string>> &table) {
 
   ss.setf(std::ios::left, std::ios::adjustfield);
   print_break();
-  print_row(table[0]);
+  print_multirow(table[0]);
   print_break();
   for (size_t i = 1; i < table.size(); ++i) {
-    print_row(table[i]);
+    print_multirow(table[i]);
   }
   print_break();
 
@@ -64,8 +97,8 @@ static std::string generateSettingsTable(const Settings &settings) {
   std::vector<std::vector<std::string>> table;
   table.reserve(1 + settings.numPlants);
 
-  std::vector<std::string> row{"Num", "Min Value", "Max Value",
-                               "Target Moisture", "Water Sensor"};
+  std::vector<std::string> row{"ID", "Min\nValue", "Max\nValue",
+                               "Target\nMoisture", "Water\nSensor"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < settings.numPlants; ++i) {
@@ -84,8 +117,8 @@ static std::string generateSettingsTable(const Settings &settings) {
 
   table.clear();
 
-  row = {"ID", "Min Value", "Max Value", "Warning Threshold",
-         "Empty Threshold"};
+  row = {"ID", "Min\nValue", "Max\nValue", "Warning\nThreshold",
+         "Empty\nThreshold"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < 2; ++i) {
@@ -109,7 +142,7 @@ static std::string generateStatusTable(const Status &status) {
   std::vector<std::vector<std::string>> table;
   table.reserve(1 + status.numPlants);
 
-  std::vector<std::string> row{"ID", "Moisture Before", "Moisture After"};
+  std::vector<std::string> row{"ID", "Moisture\nBefore", "Moisture\nAfter"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < status.numPlants; ++i) {
@@ -122,7 +155,7 @@ static std::string generateStatusTable(const Status &status) {
   std::string moistureSensorTable(generateTable(table));
   table.clear();
 
-  row = {"Num", "WaterLvl Before", "WaterLvl After"};
+  row = {"ID", "WaterLvl\nBefore", "WaterLvl\nAfter"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < status.numWaterSensors; ++i) {
