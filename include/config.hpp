@@ -3,7 +3,7 @@
 // Configure modes
 // #define DUMP_SOIL_MOISTURES_MEASUREMENTS
 #ifndef DUMP_SOIL_MOISTURES_MEASUREMENTS
-#define DUMP_WATER_LEVEL_MEASUREMENTS
+// #define DUMP_WATER_LEVEL_MEASUREMENTS
 #endif
 
 #if !defined(DUMP_SOIL_MOISTURES_MEASUREMENTS) &&                              \
