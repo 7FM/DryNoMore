@@ -56,7 +56,7 @@ generateTable(const std::vector<std::vector<std::string>> &table) {
   }
   print_break();
 
-  ss << "```";
+  ss << "```\n";
   return ss.str();
 }
 
@@ -84,16 +84,16 @@ static std::string generateSettingsTable(const Settings &settings) {
 
   table.clear();
 
-  row = {"Num", "Min Value", "Max Value", "Warning Threshold",
+  row = {"ID", "Min Value", "Max Value", "Warning Threshold",
          "Empty Threshold"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < 2; ++i) {
     row = {"W" + std::to_string(i + 1),
            std::to_string(
-               settings.sensConfs[MAX_MOISTURE_SENSOR_COUNT + i].minValue),
+               settings.sensConfs[(MAX_MOISTURE_SENSOR_COUNT) + i].minValue),
            std::to_string(
-               settings.sensConfs[MAX_MOISTURE_SENSOR_COUNT + i].maxValue),
+               settings.sensConfs[(MAX_MOISTURE_SENSOR_COUNT) + i].maxValue),
            std::to_string(settings.waterLvlThres[i].warnThres) + " %",
            std::to_string(settings.waterLvlThres[i].emptyThres) + " %"};
     table.push_back(std::move(row));
@@ -102,14 +102,14 @@ static std::string generateSettingsTable(const Settings &settings) {
   std::string waterSensorTable(generateTable(table));
 
   return "Moisture Sensor Settings:\n" + moistureSensorTable +
-         "\n\nWater-level Sensor Settings:\n" + waterSensorTable;
+         "Water-level Sensor Settings:\n" + waterSensorTable;
 }
 
 static std::string generateStatusTable(const Status &status) {
   std::vector<std::vector<std::string>> table;
   table.reserve(1 + status.numPlants);
 
-  std::vector<std::string> row{"Num", "Moisture Before", "Moisture After"};
+  std::vector<std::string> row{"ID", "Moisture Before", "Moisture After"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < status.numPlants; ++i) {
@@ -134,7 +134,7 @@ static std::string generateStatusTable(const Status &status) {
 
   std::string waterSensorTable(generateTable(table));
 
-  return "Plant Status:\n" + moistureSensorTable + "\n\nWater-level Status:\n" +
+  return "Plant Status:\n" + moistureSensorTable + "Water-level Status:\n" +
          waterSensorTable;
 }
 
