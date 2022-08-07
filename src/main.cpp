@@ -111,8 +111,9 @@ void checkMoisture(uint8_t idx) {
   const auto moistMax = settings.sensConfs[idx].maxValue;
   const auto moistTarget = settings.targetMoistures[idx];
 
-  const uint8_t waterSensIdx =
-      (settings.moistSensToWaterSensBitmap[idx / 8] >> idx) & 0x01;
+  const uint8_t waterSensIdx = (settings.moistSensToWaterSensBitmap[idx / 8] >>
+                                (idx & 7 /*aka mod 8*/)) &
+                               0x01;
 
   const auto waterPin = waterSensPins[waterSensIdx];
   const auto waterSensMask = waterSensPwrMap[waterSensIdx];
