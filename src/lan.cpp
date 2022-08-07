@@ -3,6 +3,7 @@
 #include "settings.hpp"
 
 #ifdef USE_ETHERNET
+#include "lan_protocol.hpp"
 #include <Ethernet.h>
 
 static constexpr uint8_t mac[] = MAC_ADDRESS;
@@ -17,50 +18,51 @@ static EthernetClient client;
 static bool setupEth;
 
 void initEthernet() {
-    setupEth = false;
-    Ethernet.init();
+  setupEth = false;
+  Ethernet.init();
 
-    if (Ethernet.begin(mac) == 0) {
-        SERIALprintlnP(PSTR("Failed to configure Ethernet using DHCP"));
-        // Check for Ethernet hardware present
-        if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-            SERIALprintlnP(PSTR("Ethernet shield was not found. Sorry, can't run without hardware. :("));
-            setupEth = false;
-            return;
-        }
-        if (Ethernet.linkStatus() == LinkOFF) {
-            SERIALprintlnP(PSTR("Ethernet cable is not connected."));
-        }
-        // try to configure using IP address instead of DHCP:
-        Ethernet.begin(mac, fallbackIP, fallbackDns);
-    } else {
-        SERIALprintP(PSTR("  DHCP assigned IP "));
-        SERIALprintln(Ethernet.localIP());
+  if (Ethernet.begin(mac) == 0) {
+    SERIALprintlnP(PSTR("Failed to configure Ethernet using DHCP"));
+    // Check for Ethernet hardware present
+    if (Ethernet.hardwareStatus() == EthernetNoHardware) {
+      SERIALprintlnP(PSTR("Ethernet shield was not found. Sorry, can't run "
+                          "without hardware. :("));
+      setupEth = false;
+      return;
     }
-    setupEth = true;
+    if (Ethernet.linkStatus() == LinkOFF) {
+      SERIALprintlnP(PSTR("Ethernet cable is not connected."));
+    }
+    // try to configure using IP address instead of DHCP:
+    Ethernet.begin(mac, fallbackIP, fallbackDns);
+  } else {
+    SERIALprintP(PSTR("  DHCP assigned IP "));
+    SERIALprintln(Ethernet.localIP());
+  }
+  setupEth = true;
 }
 void deinitEthernet() {
-    // TODO what can we do here?
-    // TODO go into energy saving mode!
-    setupEth = false;
+  // TODO what can we do here?
+  // TODO go into energy saving mode!
+  setupEth = false;
 }
 
-void sendStatus() {
-    // TODO
+void sendStatus(const Status &status) {
+  // TODO
 }
-void sendWarning() {
-    // TODO
+void sendWarning(uint8_t waterSensIdx) {
+  // TODO
 }
 
 void updateSettings(Settings &settings) {
-    // TODO
+  // TODO
 }
 
 // TODO unify
-void sendErrorWaterEmpty() {
-    // TODO
+void sendErrorWaterEmpty(uint8_t waterSensIdx) {
+  // TODO
 }
-void sendErrorHardware() {
-    // TODO
+void sendErrorHardware(uint8_t moistSensIdx, uint8_t waterSensIdx) {
+  // TODO
 }
 #endif

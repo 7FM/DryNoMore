@@ -42,14 +42,15 @@ void defaultInitSettings(Settings &settings) {
   }
   for (uint8_t i = 0; i < CONST_ARRAY_SIZE(settings.moistSensToWaterSensBitmap);
        ++i) {
-    // By default map only use water sensor 1
+    // By default map only use water sensor 1 & do not skip plants!
     settings.moistSensToWaterSensBitmap[i] = 0;
+    settings.skipBitmap[i] = 0;
   }
   settings.numPlants = DEFAULT_NUM_PLANTS;
 }
 
 uint8_t getUsedWaterSens(const Settings &settings) {
-  uint8_t usedWaterSens;
+  uint8_t usedWaterSens = 0;
   for (uint8_t bm : settings.moistSensToWaterSensBitmap) {
     usedWaterSens |= bm;
   }

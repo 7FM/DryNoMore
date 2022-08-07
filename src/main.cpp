@@ -25,30 +25,21 @@ static ShiftReg shiftReg;
 static Settings settings;
 
 static inline bool isSoilTooDry(uint8_t pin, uint16_t min, uint16_t max,
-                                uint8_t target) {
+                                uint8_t target, uint8_t &measurement) {
   SERIALprintP(PSTR("Measured soil moisture"));
-  uint8_t moisturePercentage = clampedMeasurement(pin, min, max);
-  return moisturePercentage < target;
+  measurement = clampedMeasurement(pin, min, max);
+  return measurement < target;
 }
 
 static inline bool waterTankNotEmpty(uint8_t pin, uint16_t min, uint16_t max,
-                                     uint8_t warning, uint8_t empty) {
+                                     uint8_t empty, uint8_t &measurement) {
   SERIALprintP(PSTR("Measured water tank level"));
-  uint8_t waterLevelPercentage = clampedMeasurement(pin, min, max);
-  bool isEmpty = waterLevelPercentage < empty;
-
-  if (isEmpty) {
-    // TODO send error to user that the tank is empty!
-    sendErrorWaterEmpty();
-  } else if (waterLevelPercentage <= warning) {
-    // TODO notify somehow the user that we need more water!!!
-    sendWarning();
-  }
-
+  measurement = clampedMeasurement(pin, min, max);
+  bool isEmpty = measurement <= empty;
   return !isEmpty;
 }
 
-void checkMoisture(uint8_t idx) {
+static uint8_t checkMoisture(uint8_t idx, Status &status) {
   const auto pumpMask = pumpPwrMap[idx];
   const auto moistPin = moistSensPins[idx];
   const auto moistSensMask = moistSensPwrMap[idx];
@@ -82,15 +73,31 @@ void checkMoisture(uint8_t idx) {
       (static_cast<long>(IRRIGATION_TIMEOUT_SEC) * 1000 + measurementDuration) /
       measurementDuration;
 
+  bool hasWaterLeft = true;
+  uint8_t waterMeasurement = UNDEFINED_LEVEL;
+  uint8_t moistMeasurement = UNDEFINED_LEVEL;
+
+  auto initCheck = [&]() {
+    if (status.beforeWaterLevels[waterSensIdx] == UNDEFINED_LEVEL) {
+      status.beforeWaterLevels[waterSensIdx] = waterMeasurement;
+    }
+    if (status.beforeMoistureLevels[idx] == UNDEFINED_LEVEL) {
+      status.beforeMoistureLevels[idx] = moistMeasurement;
+    }
+  };
+
   for (uint8_t cycle = 0;
-       waterTankNotEmpty(waterPin, waterMin, waterMax, waterWarning,
-                         waterEmpty) &&
-       isSoilTooDry(moistPin, moistMin, moistMax, moistTarget);
+       (hasWaterLeft = waterTankNotEmpty(waterPin, waterMin, waterMax,
+                                         waterEmpty, waterMeasurement)) &&
+       isSoilTooDry(moistPin, moistMin, moistMax, moistTarget,
+                    moistMeasurement);
        ++cycle) {
-    if (cycle == timeoutCycles) {
+    if (cycle == 0) {
+      initCheck();
+    } else if (cycle == timeoutCycles) {
       hardwareFailure = true;
-      sendErrorHardware();
       shiftReg.disableOutput();
+      sendErrorHardware(idx, waterSensIdx);
       break;
     }
     if (!isPumpActive) {
@@ -104,6 +111,14 @@ void checkMoisture(uint8_t idx) {
   shiftReg.disableOutput();
   shiftReg.update(0);
   shiftReg.enableOutput();
+
+  initCheck();
+  status.afterWaterLevels[waterSensIdx] = waterMeasurement;
+  status.afterMoistureLevels[idx] = moistMeasurement;
+
+  uint8_t retCode =
+      (hasWaterLeft ? 0 : 0x02) | (waterMeasurement <= waterWarning ? 0x04 : 0);
+  return retCode << (waterSensIdx << 1);
 }
 
 static void disableDigitalOnAnalogPins() {
@@ -211,7 +226,8 @@ void loop() {
     shiftReg.enableOutput();
     _delay_ms(POWER_ON_DELAY_MS);
 
-    isSoilTooDry(moistPin, moistMin, moistMax, moistTarget);
+    uint8_t measurement;
+    isSoilTooDry(moistPin, moistMin, moistMax, moistTarget, measurement);
 
     // Finally turn the power of the sensors and the pump off
     shiftReg.disableOutput();
@@ -225,14 +241,15 @@ void loop() {
     const uint8_t offsetIdx = (MAX_MOISTURE_SENSOR_COUNT) + idx;
     const auto waterMin = settings.sensConfs[offsetIdx].minValue;
     const auto waterMax = settings.sensConfs[offsetIdx].maxValue;
-    const auto waterWarning = settings.waterLvlThres[idx].warnThres;
+    // const auto waterWarning = settings.waterLvlThres[idx].warnThres;
     const auto waterEmpty = settings.waterLvlThres[idx].emptyThres;
 
     shiftReg.update(waterSensMask);
     shiftReg.enableOutput();
     _delay_ms(POWER_ON_DELAY_MS);
 
-    waterTankNotEmpty(waterPin, waterMin, waterMax, waterWarning, waterEmpty);
+    uint8_t measurement;
+    waterTankNotEmpty(waterPin, waterMin, waterMax, waterEmpty, measurement);
 
     // Finally turn the power of the sensors and the pump off
     shiftReg.disableOutput();
@@ -244,22 +261,41 @@ void loop() {
 
   // Check all plants!
   // TODO allow remote reseting hardware failure?
-  // TODO add skip setting to skip certain plants as immediate workaround of
-  // hardware problems?
   if (!hardwareFailure) {
     initEthernet(); // TODO enable Ethernet only on demand!
     updateSettings(settings);
+
+    Status status;
+    memset(&status, UNDEFINED_LEVEL, sizeof(status));
+    status.numPlants = settings.numPlants;
+    status.numWaterSensors = getUsedWaterSens(settings);
+
+    // 2 bits per water level sensor: 1 to request a warning, 1 to send an error
+    // that the water is empty! the lsb bits are used for the first sensor.
+    uint8_t resCode = 0;
 
     shiftReg.update(0);
     shiftReg.enableOutput();
 
     for (uint8_t idx = 0; !hardwareFailure && idx < settings.numPlants; ++idx) {
-      checkMoisture(idx);
+      uint8_t skip =
+          (settings.skipBitmap[idx / 8] >> (idx & 7 /*aka mod 8*/)) & 0x01;
+      if (skip == 0) {
+        resCode |= checkMoisture(idx, status);
+      }
     }
 
     shiftReg.disableOutput();
     shiftReg.update(0);
-    sendStatus();
+
+    for (uint8_t i = 0; resCode != 0 && i < 2; ++i, resCode >>= 2) {
+      if (resCode & 0x02) {
+        sendErrorWaterEmpty(i);
+      } else if (resCode & 0x01) {
+        sendWarning(i);
+      }
+    }
+    sendStatus(status);
     deinitEthernet();
   }
   longSleep<SLEEP_PERIOD_MIN>();
