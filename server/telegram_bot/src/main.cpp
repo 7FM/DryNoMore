@@ -2,8 +2,8 @@
 #include <signal.h>
 #include <thread>
 
-#include "networking.hpp"
 #include "dry_no_more_server.hpp"
+#include "networking.hpp"
 #include "telegram_bot.hpp"
 
 static std::atomic<bool> running(true);
