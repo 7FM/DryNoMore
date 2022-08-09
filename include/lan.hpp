@@ -7,8 +7,9 @@
 
 #ifdef USE_ETHERNET
 
-void initEthernet();
-void deinitEthernet();
+void setupEthernet();
+void powerUpEthernet();
+void powerDownEthernet();
 
 // TODO
 void sendStatus(const Status &status);
@@ -22,8 +23,9 @@ void updateSettings(Settings &settings);
 void sendErrorWaterEmpty(uint8_t waterSensIdx);
 void sendErrorHardware(uint8_t moistSensIdx, uint8_t waterSensIdx);
 #else
-#define initEthernet(...)
-#define deinitEthernet(...)
+#define setupEthernet(...)
+#define powerUpEthernet(...)
+#define powerDownEthernet(...)
 #define sendStatus(...)
 #define sendWarning(...)
 #define updateSettings(...)

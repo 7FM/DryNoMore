@@ -97,7 +97,11 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
     } else if (cycle == timeoutCycles) {
       hardwareFailure = true;
       shiftReg.disableOutput();
+
+      // Send HW error message!
+      powerUpEthernet();
       sendErrorHardware(idx, waterSensIdx);
+      powerDownEthernet();
       break;
     }
     if (!isPumpActive) {
@@ -173,6 +177,7 @@ void setup() {
   static_assert((MAX_MOISTURE_SENSOR_COUNT) == CONST_ARRAY_SIZE(pumpPwrMap));
 
   powerSavingSettings();
+  setupEthernet();
 
   SERIALbegin(SERIAL_BAUD_RATE);
   defaultInitSettings(settings);
@@ -264,11 +269,11 @@ void loop() {
   // ===================================================================
 
   // Check all plants!
-  // TODO allow remote reseting hardware failure?
-  if (!hardwareFailure) {
-    initEthernet(); // TODO enable Ethernet only on demand!
-    updateSettings(settings);
-
+  // allow remote to reset the hardware failure flag
+  powerUpEthernet();
+  updateSettings(settings);
+  powerDownEthernet();
+  if (!settings.hardwareFailure) {
     Status status;
     memset(&status, UNDEFINED_LEVEL, sizeof(status));
     status.numPlants = settings.numPlants;
@@ -292,6 +297,7 @@ void loop() {
     shiftReg.disableOutput();
     shiftReg.update(0);
 
+    powerUpEthernet();
     for (uint8_t i = 0; resCode != 0 && i < 2; ++i, resCode >>= 2) {
       if (resCode & 0x02) {
         sendErrorWaterEmpty(i);
@@ -300,7 +306,7 @@ void loop() {
       }
     }
     sendStatus(status);
-    deinitEthernet();
+    powerDownEthernet();
   }
   longSleep<SLEEP_PERIOD_MIN>();
 #endif
