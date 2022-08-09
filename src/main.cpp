@@ -20,7 +20,6 @@ static constexpr uint16_t waterSensPwrMap[] = WATER_SENS_PWR_MAPPING;
 static constexpr uint16_t pumpPwrMap[] = PUMP_PWR_MAPPING;
 
 // Global vars
-static bool hardwareFailure = false;
 static ShiftReg shiftReg;
 static Settings settings;
 
@@ -95,7 +94,7 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
     if (cycle == 0) {
       initCheck();
     } else if (cycle == timeoutCycles) {
-      hardwareFailure = true;
+      settings.hardwareFailure = true;
       shiftReg.disableOutput();
 
       // Send HW error message!
@@ -286,7 +285,8 @@ void loop() {
     shiftReg.update(0);
     shiftReg.enableOutput();
 
-    for (uint8_t idx = 0; !hardwareFailure && idx < settings.numPlants; ++idx) {
+    for (uint8_t idx = 0; !settings.hardwareFailure && idx < settings.numPlants;
+         ++idx) {
       uint8_t skip =
           (settings.skipBitmap[idx / 8] >> (idx & 7 /*aka mod 8*/)) & 0x01;
       if (skip == 0) {

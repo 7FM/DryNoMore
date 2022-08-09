@@ -15,6 +15,7 @@ enum PacketType : uint8_t {
   INFO_MSG = 1,
   WARN_MSG = 2,
   ERR_MSG = 4,
-  REPORT_STATUS = 8,
-  REQUEST_SETTINGS = 16
+  FAILURE_MSG = 8,
+  REPORT_STATUS = 16,
+  REQUEST_SETTINGS = 32
 };

@@ -10,7 +10,8 @@ struct Message {
     INVALID = 0,
     INFO_MSG = 1,
     WARN_MSG = 2,
-    ERR_MSG = 4
+    ERR_MSG = 4,
+    FAILURE_MSG = 8
   };
 
   Message() : msg(), msgType(INVALID) {}

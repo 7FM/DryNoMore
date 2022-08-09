@@ -47,6 +47,7 @@ void defaultInitSettings(Settings &settings) {
     settings.skipBitmap[i] = 0;
   }
   settings.numPlants = DEFAULT_NUM_PLANTS;
+  settings.hardwareFailure = false;
 }
 
 uint8_t getUsedWaterSens(const Settings &settings) {

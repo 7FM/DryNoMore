@@ -14,16 +14,22 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
                                     StateWrapper &state,
                                     ts_queue<Message> &msgQueue, int client_fd,
                                     int readSize, int bufSize) {
-  // TODO process the request!
-
   switch (static_cast<PacketType>(buf[0])) {
+    case FAILURE_MSG: {
+      {
+        // Set the hardware failure flag!
+        std::scoped_lock lock(state.settingsWrap.mut);
+        state.settingsWrap.settings.hardwareFailure = true;
+      }
+      // Intentional fall through to also send the failure message!
+    }
     case INFO_MSG:
     case WARN_MSG:
     case ERR_MSG: {
+      // forward as telegram msg
       Message::MessageType msgType = static_cast<Message::MessageType>(buf[0]);
       std::string str(reinterpret_cast<char *>(buf.get() + 1), readSize - 1);
       msgQueue.push(Message(std::move(str), msgType));
-      // TODO forward as telegram msg
       break;
     }
     case REPORT_STATUS: {
