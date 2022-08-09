@@ -11,7 +11,6 @@ void setupEthernet();
 void powerUpEthernet();
 void powerDownEthernet();
 
-// TODO
 void sendStatus(const Status &status);
 void sendWarning(uint8_t waterSensIdx);
 
@@ -19,9 +18,8 @@ void sendWarning(uint8_t waterSensIdx);
 class Settings;
 void updateSettings(Settings &settings);
 
-// TODO unify
 void sendErrorWaterEmpty(uint8_t waterSensIdx);
-void sendErrorHardware(uint8_t moistSensIdx, uint8_t waterSensIdx);
+void sendErrorHardware(uint8_t moistSensIdx);
 #else
 #define setupEthernet(...)
 #define powerUpEthernet(...)

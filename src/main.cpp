@@ -99,7 +99,7 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
 
       // Send HW error message!
       powerUpEthernet();
-      sendErrorHardware(idx, waterSensIdx);
+      sendErrorHardware(idx);
       powerDownEthernet();
       break;
     }

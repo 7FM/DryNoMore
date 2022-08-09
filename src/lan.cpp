@@ -4,6 +4,7 @@
 
 #ifdef USE_ETHERNET
 #include "lan_protocol.hpp"
+#include "macros.hpp"
 #include <Ethernet.h>
 
 #include "utility/w5100.h"
@@ -11,8 +12,10 @@
 static constexpr uint8_t mac[] = MAC_ADDRESS;
 
 // Set the static IP address to use if the DHCP fails to assign
-static IPAddress fallbackIP(FALLBACK_IP);
-static IPAddress fallbackDns(FALLBACK_DNS);
+static const IPAddress fallbackIP(FALLBACK_IP);
+static const IPAddress fallbackDns(FALLBACK_DNS);
+
+static const IPAddress serverIP(LOCAL_SERVER_IP);
 
 // initialize the library instance:
 static EthernetClient client;
@@ -75,9 +78,15 @@ void powerUpEthernet() {
     SERIALprintP(PSTR("  DHCP assigned IP "));
     SERIALprintln(Ethernet.localIP());
   }
+
+  client.connect(serverIP, LOCAL_SERVER_PORT);
 }
 
 void powerDownEthernet() {
+  if (client.connected()) {
+    client.stop();
+  }
+
   // Enter power down mode
   W5100.writePHYCFGR_W5500(W5500_RST_LOW | W5500_OPMD | W5500_OPM_POWER_DOWN);
   // TODO stay in reset mode?
@@ -85,21 +94,63 @@ void powerDownEthernet() {
 }
 
 void sendStatus(const Status &status) {
-  // TODO
+  uint8_t buf[sizeof(status) + 1];
+  buf[0] = REPORT_STATUS;
+  memcpy(buf + 1, &status, sizeof(status));
+  client.write(reinterpret_cast<const char *>(buf), sizeof(status) + 1);
+  client.flush();
+  // TODO pray for no endianess issues
 }
 void sendWarning(uint8_t waterSensIdx) {
-  // TODO
+  uint8_t buf[] = {WARN_MSG, 'r', 'u', 'n', 'n', 'i', 'n', 'g', ' ', 'l',
+                   'o',      'w', ' ', 'o', 'n', ' ', 'w', 'a', 't', 'e',
+                   'r',      ' ', 'a', 't', ' ', 'w', 'a', 't', 'e', 'r',
+                   ' ',      'l', 'e', 'v', 'e', 'l', ' ', 's', 'e', 'n',
+                   's',      'o', 'r', ' ', 'X', '!'};
+  buf[CONST_ARRAY_SIZE(buf) - 2] = '0' + waterSensIdx;
+  client.write(reinterpret_cast<const char *>(buf), CONST_ARRAY_SIZE(buf));
+  client.flush();
 }
 
 void updateSettings(Settings &settings) {
-  // TODO
+  uint8_t buf[sizeof(settings) + 1];
+  buf[0] = REQUEST_SETTINGS;
+  memcpy(buf + 1, &settings, sizeof(settings));
+  client.write(reinterpret_cast<const char *>(buf), 1);
+  client.flush();
+  unsigned readBytes = client.read(buf, sizeof(settings) + 1);
+  if (readBytes < sizeof(settings)) {
+    // the server has no settings stored, yet -> sending our current settings to
+    // the server
+    client.write(reinterpret_cast<const char *>(&settings), sizeof(settings));
+    client.flush();
+  } else {
+    // the server has settings stored -> update ours!
+    memcpy(&settings, buf, sizeof(settings));
+  }
+  // TODO pray for no endianess issues
 }
 
-// TODO unify
 void sendErrorWaterEmpty(uint8_t waterSensIdx) {
-  // TODO
+  uint8_t buf[] = {ERR_MSG, 'w', 'a', 't', 'e', 'r', ' ', 'r', 'e', 's',
+                   'e',     'r', 'v', 'o', 'i', 'r', ' ', 'X', ' ', 'i',
+                   's',     ' ', 'e', 'm', 'p', 't', 'y', '!'};
+  buf[CONST_ARRAY_SIZE(buf) - 11] = '0' + waterSensIdx;
+  client.write(reinterpret_cast<const char *>(buf), CONST_ARRAY_SIZE(buf));
+  client.flush();
 }
-void sendErrorHardware(uint8_t moistSensIdx, uint8_t waterSensIdx) {
-  // TODO
+void sendErrorHardware(uint8_t moistSensIdx) {
+  uint8_t buf[] = {
+      FAILURE_MSG, 'i', 'r', 'r', 'i', 'g', 'a', 't', 'i', 'o', 'n', ' ',
+      't',         'i', 'm', 'e', 'd', ' ', 'o', 'u', 't', ',', ' ', 'a',
+      's',         's', 'u', 'm', 'i', 'n', 'g', ' ', 'a', ' ', 'h', 'a',
+      'r',         'd', 'w', 'a', 'r', 'e', ' ', 'f', 'a', 'i', 'l', 'u',
+      'r',         'e', ' ', 'a', 't', ' ', 'e', 'i', 't', 'h', 'e', 'r',
+      ' ',         't', 'h', 'e', ' ', 'm', 'o', 'i', 's', 't', 'u', 'r',
+      'e',         ' ', 's', 'e', 'n', 's', 'o', 'r', ' ', 'X', ' ', 'o',
+      'r',         ' ', 'i', 't', 's', ' ', 'p', 'u', 'm', 'p', '!'};
+  buf[CONST_ARRAY_SIZE(buf) - 14] = '0' + moistSensIdx;
+  client.write(reinterpret_cast<const char *>(buf), CONST_ARRAY_SIZE(buf));
+  client.flush();
 }
 #endif
