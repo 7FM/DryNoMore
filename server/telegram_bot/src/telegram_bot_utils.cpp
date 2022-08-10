@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "telegram_bot_utils.hpp"
 #include "types.hpp"
 

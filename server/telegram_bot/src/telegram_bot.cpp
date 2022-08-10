@@ -1,5 +1,4 @@
 #include <iostream>
-#include <sstream>
 #include <tgbot/tgbot.h> // https://github.com/reo7sp/tgbot-cpp
 #include <vector>
 
