@@ -146,7 +146,9 @@ std::string generateMoistSettingsTable(const Settings &settings) {
 }
 
 std::string generateSettingsTable(const Settings &settings) {
-  return generateMoistSettingsTable(settings) +
+  return (settings.hardwareFailure ? "Hardware Failure: true\n"
+                                   : "Hardware Failure: false\n") +
+         generateMoistSettingsTable(settings) +
          generateWaterSettingsTable(settings);
 }
 
