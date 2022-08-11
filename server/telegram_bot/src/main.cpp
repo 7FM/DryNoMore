@@ -29,6 +29,7 @@ int main() {
 #define DEBUG_SETTINGS // TODO remove
 #ifdef DEBUG_SETTINGS
   state.settingsWrap.valid = true;
+  state.settingsWrap.settings.hardwareFailure = false;
   state.settingsWrap.settings.numPlants = 2;
   state.settingsWrap.settings.sensConfs[0].minValue = 100;
   state.settingsWrap.settings.sensConfs[0].maxValue = 500;
