@@ -124,12 +124,11 @@ std::string generateMoistSettingsTable(const Settings &settings) {
         (settings.moistSensToWaterSensBitmap[i / 8] >> (i & 7 /*aka mod 8*/)) &
         0x01;
     uint8_t skip = (settings.skipBitmap[i / 8] >> (i & 7 /*aka mod 8*/)) & 0x01;
-    std::string waterSensor = sensorIdx ? "W2" : "W1";
     row = {"P" + std::to_string(i + 1),
            std::to_string(settings.sensConfs[i].minValue),
            std::to_string(settings.sensConfs[i].maxValue),
            std::to_string(settings.targetMoistures[i]) + " %",
-           waterSensor,
+           sensorIdx ? "W2" : "W1",
            skip ? "true" : "false"};
     table.push_back(std::move(row));
   }

@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "telegram_bot.hpp"
+#include "telegram_bot_keyboards.hpp"
 #include "telegram_bot_utils.hpp"
 
 void runDryNoMoreTelegramBot(const char *token,
@@ -39,32 +40,13 @@ void runDryNoMoreTelegramBot(const char *token,
   // TODO build menus -> maybe create a tree structure first and automatically
   // generate required keyboards and callbacks?
 
-  TgBot::InlineKeyboardMarkup::Ptr editSettingsKeyboard(
-      new TgBot::InlineKeyboardMarkup);
-  std::vector<TgBot::InlineKeyboardButton::Ptr> row0;
-  TgBot::InlineKeyboardButton::Ptr but(new TgBot::InlineKeyboardButton);
-  but->text = "edit sensor settings";
-  but->callbackData = "edit_sensor";
-  row0.push_back(but);
-  but = TgBot::InlineKeyboardButton::Ptr(new TgBot::InlineKeyboardButton);
-  but->text = "edit thresholds";
-  but->callbackData = "edit_thres";
-  row0.push_back(but);
-  editSettingsKeyboard->inlineKeyboard.push_back(row0);
-
-  std::vector<TgBot::InlineKeyboardButton::Ptr> row1;
-  TgBot::InlineKeyboardButton::Ptr commitButton(
-      new TgBot::InlineKeyboardButton);
-  commitButton->text = "commit changes";
-  commitButton->callbackData = "commit_data";
-  row1.push_back(commitButton);
-  editSettingsKeyboard->inlineKeyboard.push_back(row1);
-
   addCommand("start", "init conversation", [&](TgBot::Message::Ptr message) {
     api.sendMessage(message->chat->id, "Howdy!");
     // save the chat ID!
     broadcastChats.insert(message->chat->id);
   });
+
+  KeyboardManager menus(settingSnapshot);
 
   addCommand("edit", "edit the DryNoMore irrigation settings",
              [&](TgBot::Message::Ptr message) {
@@ -81,7 +63,7 @@ void runDryNoMoreTelegramBot(const char *token,
                if (valid) {
                  api.sendMessage(message->chat->id,
                                  generateSettingsTable(settingSnapshot), false,
-                                 0, editSettingsKeyboard, "Markdown");
+                                 0, menus.init(), "Markdown");
                } else {
                  std::string response =
                      "Settings are not yet synchronized!\nPlease wait for the "
@@ -92,16 +74,6 @@ void runDryNoMoreTelegramBot(const char *token,
 
   // Register callbacks!
   auto &broadcaster = bot.getEvents();
-
-  broadcaster.onCallbackQuery([&](TgBot::CallbackQuery::Ptr query) {
-    api.answerCallbackQuery(query->id);
-
-    if (StringTools::startsWith(query->data, "check_data")) {
-      std::string response = "ok";
-      api.sendMessage(query->message->chat->id, response, false, 0,
-                      editSettingsKeyboard, "Markdown");
-    }
-  });
 
   for (size_t i = 0; i < commands.size(); ++i) {
     broadcaster.onCommand(
