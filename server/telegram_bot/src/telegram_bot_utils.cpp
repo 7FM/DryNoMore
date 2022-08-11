@@ -15,6 +15,47 @@ static size_t findMaxStringLineSize(const std::string &s) {
   return max;
 }
 
+static void printMultiLineRow(std::ostream &stream,
+                              const std::vector<size_t> &maxChars,
+                              const std::vector<std::string> &row) {
+  std::vector<std::string> newRow;
+  std::vector<std::string> nextRow;
+  const std::vector<std::string> *currentRow = &row;
+
+  do {
+    stream << "|";
+    for (size_t i = 0; i < maxChars.size(); ++i) {
+      stream << ' ';
+      auto old = stream.width(maxChars[i]);
+      const auto &s = (*currentRow)[i];
+
+      // Split up row if it contains newlines
+      auto it = s.find('\n');
+      if (it != std::string::npos) {
+        // Fill with empty strings up to i
+        newRow.resize(i);
+
+        stream << s.substr(0, it);
+        newRow.push_back(s.substr(it + 1));
+      } else {
+        stream << s;
+      }
+
+      stream.width(old);
+      stream << " |";
+    }
+    stream << '\n';
+
+    std::swap(nextRow, newRow);
+    newRow.clear();
+
+    if (!nextRow.empty()) {
+      nextRow.resize(maxChars.size());
+    }
+    currentRow = &nextRow;
+  } while (!currentRow->empty());
+}
+
 std::string generateTable(const std::vector<std::vector<std::string>> &table) {
 
   if (table.empty()) {
@@ -22,7 +63,7 @@ std::string generateTable(const std::vector<std::vector<std::string>> &table) {
   }
 
   std::vector<size_t> maxChars;
-  maxChars.reserve(table.size());
+  maxChars.reserve(table[0].size());
 
   size_t totalWidth = 1;
   for (size_t i = 0; i < table[0].size(); ++i) {
@@ -37,39 +78,6 @@ std::string generateTable(const std::vector<std::vector<std::string>> &table) {
   std::stringstream ss;
   ss << "```\n";
 
-  auto print_multirow = [&](const std::vector<std::string> &row) {
-    std::vector<std::string> newRow;
-    std::vector<std::string> nextRow;
-    const std::vector<std::string> *currentRow = &row;
-
-    do {
-      ss << "|";
-      for (size_t i = 0; i < maxChars.size(); ++i) {
-        ss << ' ';
-        auto old = ss.width(maxChars[i]);
-        const auto &s = (*currentRow)[i];
-        auto it = s.find('\n');
-        if (it != std::string::npos) {
-          if (newRow.size() != i) {
-            // Fill with empty strings up to i
-            newRow.resize(i);
-          }
-          ss << s.substr(0, it);
-          newRow.push_back(s.substr(it + 1));
-        } else {
-          ss << s;
-        }
-        ss.width(old);
-        ss << " |";
-      }
-      ss << '\n';
-
-      std::swap(nextRow, newRow);
-      newRow.clear();
-      currentRow = &nextRow;
-    } while (!currentRow->empty());
-  };
-
   auto print_break = [&] {
     ss.width(totalWidth);
     ss.fill('-');
@@ -79,10 +87,10 @@ std::string generateTable(const std::vector<std::vector<std::string>> &table) {
 
   ss.setf(std::ios::left, std::ios::adjustfield);
   print_break();
-  print_multirow(table[0]);
+  printMultiLineRow(ss, maxChars, table[0]);
   print_break();
   for (size_t i = 1; i < table.size(); ++i) {
-    print_multirow(table[i]);
+    printMultiLineRow(ss, maxChars, table[i]);
   }
   print_break();
 
@@ -111,6 +119,7 @@ std::string generateWaterSettingsTable(const Settings &settings) {
 
   return "Water-level Sensor Settings:\n" + generateTable(table);
 }
+
 std::string generateMoistSettingsTable(const Settings &settings) {
   std::vector<std::vector<std::string>> table;
   table.reserve(1 + settings.numPlants);
