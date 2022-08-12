@@ -17,6 +17,7 @@ void runDryNoMoreTelegramBot(const char *token,
   // TODO similar to the userWhitelist we need to persist the chats to
   // broadcast messages to!
   std::set<std::int64_t> broadcastChats;
+
   Settings settingSnapshot;
   auto &api = bot.getApi();
 
@@ -30,22 +31,11 @@ void runDryNoMoreTelegramBot(const char *token,
     commandHandler.push_back(std::move(handler));
   };
 
-  // TODO idea for updating the settings:
-  //   1. Command to start editing
-  //   -> use settings snapshot
-  //   -> make adjustments via inline keyboard
-  //   -> commit changes
-  //   -> atomic settings update -> will be used on next wakeup
-
-  // TODO build menus -> maybe create a tree structure first and automatically
-  // generate required keyboards and callbacks?
-
   addCommand("start", "init conversation", [&](TgBot::Message::Ptr message) {
     api.sendMessage(message->chat->id, "Howdy!");
-    // save the chat ID!
-    broadcastChats.insert(message->chat->id);
   });
 
+  // TODO we need to pass settings too, to allow committing the changes!
   KeyboardManager menus(settingSnapshot);
 
   addCommand("edit", "edit the DryNoMore irrigation settings",
@@ -84,10 +74,14 @@ void runDryNoMoreTelegramBot(const char *token,
                                 std::to_string(message->from->id));
             return;
           }
+          // save the chat ID!
+          broadcastChats.insert(message->chat->id);
 
           commandHandler[i](message);
         });
   }
+
+  menus.registerActions(api, broadcaster);
 
   // Set my commands
   api.setMyCommands(commands);

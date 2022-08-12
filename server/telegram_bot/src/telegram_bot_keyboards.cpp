@@ -84,7 +84,8 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
   auto topLayer = std::make_shared<Keyboard>(
       [](const TgBot::Api &api, Settings &settings,
          TgBot::CallbackQuery::Ptr query, Keyboard *thisKb) {
-        api.editMessageText(generateSettingsTable(settings), 0, 0,
+        api.editMessageText(generateSettingsTable(settings),
+                            query->message->chat->id, query->message->messageId,
                             query->inlineMessageId, "Markdown", false,
                             thisKb->keyboard);
       });
@@ -94,7 +95,9 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
                                        TgBot::CallbackQuery::Ptr query,
                                        Keyboard *thisKb) {
     // Nothing to do here except changing the keyboard
-    api.editMessageReplyMarkup(0, 0, query->inlineMessageId, thisKb->keyboard);
+    api.editMessageReplyMarkup(query->message->chat->id,
+                               query->message->messageId,
+                               query->inlineMessageId, thisKb->keyboard);
   };
 
   auto editValue = std::make_shared<Keyboard>(simpleKeyboardChange);
@@ -109,7 +112,8 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
   auto editMoistLayer = std::make_shared<Keyboard>(
       [](const TgBot::Api &api, Settings &settings,
          TgBot::CallbackQuery::Ptr query, Keyboard *thisKb) {
-        api.editMessageText(generateMoistSettingsTable(settings), 0, 0,
+        api.editMessageText(generateMoistSettingsTable(settings),
+                            query->message->chat->id, query->message->messageId,
                             query->inlineMessageId, "Markdown", false,
                             thisKb->keyboard);
       });
@@ -118,7 +122,8 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
   auto editMoistDetailLayer = std::make_shared<Keyboard>(
       [](const TgBot::Api &api, Settings &settings,
          TgBot::CallbackQuery::Ptr query, Keyboard *thisKb) {
-        api.editMessageText(generateMoistSettingsTable(settings), 0, 0,
+        api.editMessageText(generateMoistSettingsTable(settings),
+                            query->message->chat->id, query->message->messageId,
                             query->inlineMessageId, "Markdown", false,
                             thisKb->keyboard);
       });
@@ -127,7 +132,8 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
   auto editWaterLayer = std::make_shared<Keyboard>(
       [](const TgBot::Api &api, Settings &settings,
          TgBot::CallbackQuery::Ptr query, Keyboard *thisKb) {
-        api.editMessageText(generateWaterSettingsTable(settings), 0, 0,
+        api.editMessageText(generateWaterSettingsTable(settings),
+                            query->message->chat->id, query->message->messageId,
                             query->inlineMessageId, "Markdown", false,
                             thisKb->keyboard);
       });
@@ -136,7 +142,8 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
   auto editWaterDetailLayer = std::make_shared<Keyboard>(
       [](const TgBot::Api &api, Settings &settings,
          TgBot::CallbackQuery::Ptr query, Keyboard *thisKb) {
-        api.editMessageText(generateWaterSettingsTable(settings), 0, 0,
+        api.editMessageText(generateWaterSettingsTable(settings),
+                            query->message->chat->id, query->message->messageId,
                             query->inlineMessageId, "Markdown", false,
                             thisKb->keyboard);
       });
@@ -223,8 +230,8 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
           }
 
           // update the message with the tables
-          keyboardHistory.back().lock()->onCallbackQuery(api, settings, query,
-                                                         currentKb);
+          keyboardHistory.back().lock()->callback(api, settings, query,
+                                                  currentKb);
         }
       });
   auto plus10 = std::make_shared<Button>(
@@ -253,8 +260,8 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
           }
 
           // update the message with the tables
-          keyboardHistory.back().lock()->onCallbackQuery(api, settings, query,
-                                                         currentKb);
+          keyboardHistory.back().lock()->callback(api, settings, query,
+                                                  currentKb);
         }
       });
   auto plus100 = std::make_shared<Button>(
@@ -283,8 +290,8 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
           }
 
           // update the message with the tables
-          keyboardHistory.back().lock()->onCallbackQuery(api, settings, query,
-                                                         currentKb);
+          keyboardHistory.back().lock()->callback(api, settings, query,
+                                                  currentKb);
         }
       });
   auto min1 = std::make_shared<Button>(
@@ -313,8 +320,8 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
           }
 
           // update the message with the tables
-          keyboardHistory.back().lock()->onCallbackQuery(api, settings, query,
-                                                         currentKb);
+          keyboardHistory.back().lock()->callback(api, settings, query,
+                                                  currentKb);
         }
       });
   auto min10 = std::make_shared<Button>(
@@ -343,8 +350,8 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
           }
 
           // update the message with the tables
-          keyboardHistory.back().lock()->onCallbackQuery(api, settings, query,
-                                                         currentKb);
+          keyboardHistory.back().lock()->callback(api, settings, query,
+                                                  currentKb);
         }
       });
   auto min100 = std::make_shared<Button>(
@@ -373,8 +380,8 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
           }
 
           // update the message with the tables
-          keyboardHistory.back().lock()->onCallbackQuery(api, settings, query,
-                                                         currentKb);
+          keyboardHistory.back().lock()->callback(api, settings, query,
+                                                  currentKb);
         }
       });
 
@@ -398,7 +405,7 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
         if (settings.numPlants < MAX_MOISTURE_SENSOR_COUNT) {
           ++settings.numPlants;
           // update the message with the tables
-          currentKb->onCallbackQuery(api, settings, query, currentKb);
+          currentKb->callback(api, settings, query, currentKb);
         }
       });
   auto clearHardwareFailure = std::make_shared<Button>(
@@ -408,7 +415,7 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
         if (settings.hardwareFailure) {
           settings.hardwareFailure = false;
           // update the message with the tables
-          currentKb->onCallbackQuery(api, settings, query, currentKb);
+          currentKb->callback(api, settings, query, currentKb);
         }
       });
   auto commitBut =
@@ -504,7 +511,7 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
     buttons.reserve(MAX_MOISTURE_SENSOR_COUNT);
     for (unsigned i = 0; i < MAX_MOISTURE_SENSOR_COUNT; ++i) {
       auto but = std::make_shared<Button>(
-          "Edit P" + (i + 1), "edit_w" + (i + 1),
+          "Edit P" + std::to_string(i + 1), "edit_w" + std::to_string(i + 1),
           [editValueInfo, i](const TgBot::Api &, Settings &,
                              TgBot::CallbackQuery::Ptr, Keyboard *) {
             editValueInfo->idx = i;
@@ -521,7 +528,6 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
   // TODO add buttons for targetMoistures, moistSensToWaterSensBitmap,
   // skipBitmap
 
-  // TODO unsafe
   Keyboard::addRow(editMoistDetailLayer, {editMinValBut, editMaxValBut});
   Keyboard::addRow(editMoistDetailLayer, {backBut});
 
@@ -536,7 +542,6 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
   // Edit percentage buttons
   // =================================================================
 
-  // TODO reusing the min/plus buttons is unsafe!
   Keyboard::addRow(editPercentage, {min1, min10, plus10, plus1});
   Keyboard::addRow(editPercentage, {backBut});
 
