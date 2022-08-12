@@ -17,7 +17,9 @@ static size_t findMaxStringLineSize(const std::string &s) {
 
 static void printMultiLineRow(std::ostream &stream,
                               const std::vector<size_t> &maxChars,
-                              const std::vector<std::string> &row) {
+                              const std::vector<std::string> &row,
+                              const std::vector<bool> &printLeftWhitespace,
+                              const std::vector<bool> &printRightWhitespace) {
   std::vector<std::string> newRow;
   std::vector<std::string> nextRow;
   const std::vector<std::string> *currentRow = &row;
@@ -25,7 +27,9 @@ static void printMultiLineRow(std::ostream &stream,
   do {
     stream << "|";
     for (size_t i = 0; i < maxChars.size(); ++i) {
-      stream << ' ';
+      if (printLeftWhitespace.empty() || printLeftWhitespace[i]) {
+        stream << ' ';
+      }
       auto old = stream.width(maxChars[i]);
       const auto &s = (*currentRow)[i];
 
@@ -42,7 +46,8 @@ static void printMultiLineRow(std::ostream &stream,
       }
 
       stream.width(old);
-      stream << " |";
+      stream << (printRightWhitespace.empty() || printRightWhitespace[i] ? " |"
+                                                                         : "|");
     }
     stream << '\n';
 
@@ -56,7 +61,9 @@ static void printMultiLineRow(std::ostream &stream,
   } while (!currentRow->empty());
 }
 
-std::string generateTable(const std::vector<std::vector<std::string>> &table) {
+std::string generateTable(const std::vector<std::vector<std::string>> &table,
+                          const std::vector<bool> &printLeftWhitespace,
+                          const std::vector<bool> &printRightWhitespace) {
 
   if (table.empty()) {
     return "";
@@ -71,7 +78,10 @@ std::string generateTable(const std::vector<std::vector<std::string>> &table) {
     for (auto &row : table) {
       max = std::max(max, findMaxStringLineSize(row[i]));
     }
-    totalWidth += max + 3;
+    totalWidth +=
+        max + 1 +
+        (printLeftWhitespace.empty() || printLeftWhitespace[i] ? 1 : 0) +
+        (printRightWhitespace.empty() || printRightWhitespace[i] ? 1 : 0);
     maxChars.push_back(max);
   }
 
@@ -87,10 +97,12 @@ std::string generateTable(const std::vector<std::vector<std::string>> &table) {
 
   ss.setf(std::ios::left, std::ios::adjustfield);
   print_break();
-  printMultiLineRow(ss, maxChars, table[0]);
+  printMultiLineRow(ss, maxChars, table[0], printLeftWhitespace,
+                    printRightWhitespace);
   print_break();
   for (size_t i = 1; i < table.size(); ++i) {
-    printMultiLineRow(ss, maxChars, table[i]);
+    printMultiLineRow(ss, maxChars, table[i], printLeftWhitespace,
+                      printRightWhitespace);
   }
   print_break();
 
@@ -102,6 +114,8 @@ std::string generateWaterSettingsTable(const Settings &settings) {
   std::vector<std::vector<std::string>> table;
   table.reserve(1 + 2);
 
+  std::vector<bool> printLeftWhitespace = {false, true, true, true, true};
+  std::vector<bool> printRightWhitespace = {false, true, true, false, false};
   std::vector<std::string> row{"ID", "Min\nVal", "Max\nVal", "Warn\nThres",
                                "Empty\nThres"};
   table.push_back(std::move(row));
@@ -117,15 +131,20 @@ std::string generateWaterSettingsTable(const Settings &settings) {
     table.push_back(std::move(row));
   }
 
-  return "Water-level Sensor Settings:\n" + generateTable(table);
+  return "Water-level Sensor Settings:\n" +
+         generateTable(table, printLeftWhitespace, printRightWhitespace);
 }
 
 std::string generateMoistSettingsTable(const Settings &settings) {
   std::vector<std::vector<std::string>> table;
   table.reserve(1 + settings.numPlants);
 
-  std::vector<std::string> row{
-      "ID", "Min\nVal", "Max\nVal", "Target\nMoist", "Water\nSensor", "Skip"};
+  std::vector<bool> printLeftWhitespace = {false, true,  true,
+                                           true,  false, true};
+  std::vector<bool> printRightWhitespace = {false, true,  true,
+                                            false, false, true};
+  std::vector<std::string> row{"ID",          "Min\nVal", "Max\nVal",
+                               "Moist\nGoal", "Wat\nSen", "Skp"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < settings.numPlants; ++i) {
@@ -138,11 +157,12 @@ std::string generateMoistSettingsTable(const Settings &settings) {
            std::to_string(settings.sensConfs[i].maxValue),
            std::to_string(settings.targetMoistures[i]) + " %",
            sensorIdx ? "W2" : "W1",
-           skip ? "true" : "false"};
+           skip ? "yes" : "no"};
     table.push_back(std::move(row));
   }
 
-  return "Moisture Sensor Settings:\n" + generateTable(table);
+  return "Moisture Sensor Settings:\n" +
+         generateTable(table, printLeftWhitespace, printRightWhitespace);
 }
 
 std::string generateSettingsTable(const Settings &settings) {
