@@ -76,7 +76,9 @@ TgBot::InlineKeyboardMarkup::Ptr KeyboardManager::init() {
   return keyboards[0]->keyboard;
 }
 
-KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
+KeyboardManager::KeyboardManager(Settings &settings,
+                                 std::function<void()> handleCommit)
+    : settings(settings) {
 
   auto editValueInfo = std::make_shared<EditValueInfo>();
 
@@ -440,23 +442,33 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
           currentKb->callback(api, settings, query, currentKb);
         }
       });
-  auto commitBut =
-      std::make_shared<Button>("Commit settings", "commit_settings",
-                               [this](const TgBot::Api &, Settings &,
-                                      TgBot::CallbackQuery::Ptr, Keyboard *) {
-                                 // TODO end inline keyboard session & update
-                                 // the settings (get lock etc.)
-                                 activeKeyboard.reset();
-                                 keyboardHistory.clear();
-                               });
-  auto abortBut =
-      std::make_shared<Button>("Abort", "abort",
-                               [this](const TgBot::Api &, Settings &,
-                                      TgBot::CallbackQuery::Ptr, Keyboard *) {
-                                 // TODO end inline keyboard session
-                                 activeKeyboard.reset();
-                                 keyboardHistory.clear();
-                               });
+  auto commitBut = std::make_shared<Button>(
+      "Commit settings", "commit_settings",
+      [this, handleCommit](const TgBot::Api &api, Settings &,
+                           TgBot::CallbackQuery::Ptr query, Keyboard *) {
+        activeKeyboard.reset();
+        keyboardHistory.clear();
+
+        // remove inline keyboard
+        api.editMessageReplyMarkup(query->message->chat->id,
+                                   query->message->messageId,
+                                   query->inlineMessageId);
+        handleCommit();
+      });
+  auto abortBut = std::make_shared<Button>(
+      "Abort", "abort",
+      [this](const TgBot::Api &api, Settings &, TgBot::CallbackQuery::Ptr query,
+             Keyboard *) {
+        activeKeyboard.reset();
+        keyboardHistory.clear();
+
+        // TODO show old settings? or delete message?
+
+        // remove inline keyboard
+        api.editMessageReplyMarkup(query->message->chat->id,
+                                   query->message->messageId,
+                                   query->inlineMessageId);
+      });
 
   Keyboard::addRow(topLayer, {editMoistBut, editWaterBut});
   Keyboard::addRow(topLayer, {addPlantBut, removePlantBut});

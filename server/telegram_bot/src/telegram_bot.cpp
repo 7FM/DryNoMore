@@ -35,8 +35,12 @@ void runDryNoMoreTelegramBot(const char *token,
     api.sendMessage(message->chat->id, "Howdy!");
   });
 
-  // TODO we need to pass settings too, to allow committing the changes!
-  KeyboardManager menus(settingSnapshot);
+  KeyboardManager menus(settingSnapshot, [&settingSnapshot, &state]() {
+    auto &set = state.settingsWrap;
+    std::scoped_lock lock(set.mut);
+    // Move snapshot settings to actual settings!
+    std::memcpy(&set.settings, &settingSnapshot, sizeof(settingSnapshot));
+  });
 
   addCommand("edit", "edit the DryNoMore irrigation settings",
              [&](TgBot::Message::Ptr message) {

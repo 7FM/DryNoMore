@@ -39,7 +39,7 @@ struct Button {
 };
 
 struct KeyboardManager {
-  KeyboardManager(Settings &settings);
+  KeyboardManager(Settings &settings, std::function<void()> handleCommit);
 
   void registerActions(const TgBot::Api &api,
                        TgBot::EventBroadcaster &broadcaster);
