@@ -404,6 +404,28 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
          TgBot::CallbackQuery::Ptr query, Keyboard *currentKb) {
         if (settings.numPlants < MAX_MOISTURE_SENSOR_COUNT) {
           ++settings.numPlants;
+          // init plant settings with sane values
+          settings.sensConfs[settings.numPlants - 1].minValue = 0;
+          settings.sensConfs[settings.numPlants - 1].maxValue = 0;
+          settings.targetMoistures[settings.numPlants - 1] = 0;
+          // Skip by default
+          settings.skipBitmap[(settings.numPlants - 1) / 8] |=
+              (static_cast<uint8_t>(1)
+               << ((settings.numPlants - 1) & 7 /*aka mod 8*/));
+          // use W1 by default
+          settings.moistSensToWaterSensBitmap[(settings.numPlants - 1) / 8] &=
+              ~(static_cast<uint8_t>(1)
+                << ((settings.numPlants - 1) & 7 /*aka mod 8*/));
+          // update the message with the tables
+          currentKb->callback(api, settings, query, currentKb);
+        }
+      });
+  auto removePlantBut = std::make_shared<Button>(
+      "Remove plant", "remove_plant",
+      [](const TgBot::Api &api, Settings &settings,
+         TgBot::CallbackQuery::Ptr query, Keyboard *currentKb) {
+        if (settings.numPlants > 0) {
+          --settings.numPlants;
           // update the message with the tables
           currentKb->callback(api, settings, query, currentKb);
         }
@@ -437,7 +459,7 @@ KeyboardManager::KeyboardManager(Settings &settings) : settings(settings) {
                                });
 
   Keyboard::addRow(topLayer, {editMoistBut, editWaterBut});
-  Keyboard::addRow(topLayer, {addPlantBut});
+  Keyboard::addRow(topLayer, {addPlantBut, removePlantBut});
   Keyboard::addRow(topLayer, {clearHardwareFailure});
   Keyboard::addRow(topLayer, {commitBut, abortBut});
 
