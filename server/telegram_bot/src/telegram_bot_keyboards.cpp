@@ -310,7 +310,7 @@ KeyboardManager::KeyboardManager(Settings &settings,
 
         if (value > editValueInfo->minVal) {
           // update value and write back!
-          ++value;
+          --value;
           if (editValueInfo->value8 != nullptr) {
             *(editValueInfo->value8) = value;
           } else if (editValueInfo->value16 != nullptr) {
@@ -340,7 +340,7 @@ KeyboardManager::KeyboardManager(Settings &settings,
 
         if (value > editValueInfo->minVal + 10 - 1) {
           // update value and write back!
-          value += 10;
+          value -= 10;
           if (editValueInfo->value8 != nullptr) {
             *(editValueInfo->value8) = value;
           } else if (editValueInfo->value16 != nullptr) {
@@ -370,7 +370,7 @@ KeyboardManager::KeyboardManager(Settings &settings,
 
         if (value > editValueInfo->minVal + 100 - 1) {
           // update value and write back!
-          value += 100;
+          value -= 100;
           if (editValueInfo->value8 != nullptr) {
             *(editValueInfo->value8) = value;
           } else if (editValueInfo->value16 != nullptr) {
