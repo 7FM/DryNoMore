@@ -578,9 +578,47 @@ KeyboardManager::KeyboardManager(Settings &settings,
     Keyboard::addRow(editMoistLayer, {backBut});
   }
 
-  // TODO add buttons for targetMoistures, moistSensToWaterSensBitmap,
-  // skipBitmap
+  auto editTargetMoistBut = std::make_shared<Button>(
+      "Edit Target Moist", "edit_target_moist",
+      [editValueInfo](const TgBot::Api &, Settings &settings,
+                      TgBot::CallbackQuery::Ptr, Keyboard *) {
+        if (!editValueInfo->isWaterLvl) {
+          editValueInfo->minVal = 0;
+          editValueInfo->maxVal = 99;
+          editValueInfo->value16 = nullptr;
+          editValueInfo->value8 =
+              &(settings.targetMoistures[editValueInfo->idx]);
+        } else {
+          // TODO wtf
+        }
+      },
+      editPercentage);
 
+  auto toggleWaterSensMappingBut = std::make_shared<Button>(
+      "Toggle Water Sens", "toggle_water_sens",
+      [editValueInfo](const TgBot::Api &api, Settings &settings,
+                      TgBot::CallbackQuery::Ptr query, Keyboard *currentKb) {
+        settings.moistSensToWaterSensBitmap[editValueInfo->idx / 8] ^=
+            (static_cast<uint8_t>(1) << (editValueInfo->idx & 7 /*aka mod 8*/));
+
+        // update the message with the tables
+        currentKb->callback(api, settings, query, currentKb);
+      });
+
+  auto toggleSkipBut = std::make_shared<Button>(
+      "Toggle Skip", "toggle_skip",
+      [editValueInfo](const TgBot::Api &api, Settings &settings,
+                      TgBot::CallbackQuery::Ptr query, Keyboard *currentKb) {
+        settings.skipBitmap[editValueInfo->idx / 8] ^=
+            (static_cast<uint8_t>(1) << (editValueInfo->idx & 7 /*aka mod 8*/));
+
+        // update the message with the tables
+        currentKb->callback(api, settings, query, currentKb);
+      });
+
+  Keyboard::addRow(editMoistDetailLayer, {editTargetMoistBut});
+  Keyboard::addRow(editMoistDetailLayer,
+                   {toggleWaterSensMappingBut, toggleSkipBut});
   Keyboard::addRow(editMoistDetailLayer, {editMinValBut, editMaxValBut});
   Keyboard::addRow(editMoistDetailLayer, {backBut});
 
