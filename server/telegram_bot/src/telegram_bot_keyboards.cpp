@@ -545,7 +545,7 @@ KeyboardManager::KeyboardManager(Settings &settings,
     buttons.reserve(MAX_MOISTURE_SENSOR_COUNT);
     for (unsigned i = 0; i < MAX_MOISTURE_SENSOR_COUNT; ++i) {
       auto but = std::make_shared<Button>(
-          "Edit P" + std::to_string(i + 1), "edit_w" + std::to_string(i + 1),
+          "Edit P" + std::to_string(i + 1), "edit_p" + std::to_string(i + 1),
           [editValueInfo, i](const TgBot::Api &, Settings &,
                              TgBot::CallbackQuery::Ptr, Keyboard *) {
             editValueInfo->idx = i;
