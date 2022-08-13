@@ -397,7 +397,26 @@ KeyboardManager::KeyboardManager(Settings &settings,
   // =================================================================
 
   auto editMoistBut = std::make_shared<Button>(
-      "Edit Moisture settings", "edit_moist", nop, editMoistLayer);
+      "Edit Moisture settings", "edit_moist",
+      [editMoistLayer](const TgBot::Api &, Settings &settings,
+                       TgBot::CallbackQuery::Ptr, Keyboard *) {
+        editMoistLayer->keyboard->inlineKeyboard[0].clear();
+
+        for (unsigned i = 1; i <= settings.numPlants; ++i) {
+          for (auto &p : editMoistLayer->buttons) {
+            auto &s = std::get<0>(p);
+            if (StringTools::startsWith(s, "edit_p")) {
+              uint8_t idx = static_cast<uint8_t>(s[6] - '0');
+              if (idx == i) {
+                auto &b = std::get<1>(p)->button;
+                editMoistLayer->keyboard->inlineKeyboard[0].push_back(b);
+                break;
+              }
+            }
+          }
+        }
+      },
+      editMoistLayer);
   auto editWaterBut = std::make_shared<Button>(
       "Edit Water settings", "edit_water", nop, editWaterLayer);
   auto addPlantBut = std::make_shared<Button>(
