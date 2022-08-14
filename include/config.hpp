@@ -16,9 +16,6 @@
     "Disable both DUMP_SOIL_MOISTURES_MEASUREMENTS and DUMP_WATER_LEVEL_MEASUREMENTS in include/config.hpp to run in production mode"
 #endif
 
-// TODO SPI will be required for the Ethernet connection
-#define DISABLE_SPI
-
 #define USE_ETHERNET
 #ifdef USE_ETHERNET
 
@@ -29,8 +26,10 @@
 #define FALLBACK_IP LOCAL_NETWORK_SUBNET, 254
 #define FALLBACK_DNS LOCAL_NETWORK_SUBNET, 1
 #define LOCAL_SERVER_IP LOCAL_NETWORK_SUBNET, 42
-#define LOCAL_SERVER_PORT 12345
-
+#define LOCAL_SERVER_PORT 42424
+#else
+// SPI will be required for the Ethernet connection
+#define DISABLE_SPI
 #endif
 
 // Config
