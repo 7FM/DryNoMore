@@ -1,0 +1,11 @@
+token: 'ADD YOUR TOKEN HERE!!!'
+user_whitelist:
+# Add your user IDs here!
+  - 
+# Add your chat IDs here, that should receive notifications
+# The char ID is probably identical to the user ID so this option might be removed in the future
+user_chats:
+  - 
+# Change the DryNoMore tcp port if desired
+# Note that you need to adjust the config.hpp for the Arduino project accordingly!
+tcp_port: 42424
