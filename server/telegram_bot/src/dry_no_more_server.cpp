@@ -22,7 +22,7 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
         state.settingsWrap.settings.hardwareFailure = true;
       }
       // Intentional fall through to also send the failure message!
-    }
+    } /* fall through */
     case INFO_MSG:
     case WARN_MSG:
     case ERR_MSG: {

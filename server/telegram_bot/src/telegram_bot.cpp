@@ -6,17 +6,15 @@
 #include "telegram_bot_keyboards.hpp"
 #include "telegram_bot_utils.hpp"
 
-void runDryNoMoreTelegramBot(const char *token,
+void runDryNoMoreTelegramBot(const std::string &token,
                              const std::set<std::int64_t> &userWhitelist,
+                             std::set<std::int64_t> &broadcastChats,
                              StateWrapper &state, ts_queue<Message> &msgQueue,
                              const std::atomic<bool> &running) {
   TgBot::Bot bot(token);
 
   std::vector<TgBot::BotCommand::Ptr> commands;
   std::vector<TgBot::EventBroadcaster::MessageListener> commandHandler;
-  // TODO similar to the userWhitelist we need to persist the chats to
-  // broadcast messages to!
-  std::set<std::int64_t> broadcastChats;
 
   Settings settingSnapshot;
   auto &api = bot.getApi();
