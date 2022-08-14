@@ -402,17 +402,12 @@ KeyboardManager::KeyboardManager(Settings &settings,
                        TgBot::CallbackQuery::Ptr, Keyboard *) {
         editMoistLayer->keyboard->inlineKeyboard[0].clear();
 
+        // Add only active plants
         for (unsigned i = 1; i <= settings.numPlants; ++i) {
-          for (auto &p : editMoistLayer->buttons) {
-            auto &s = std::get<0>(p);
-            if (StringTools::startsWith(s, "edit_p")) {
-              uint8_t idx = static_cast<uint8_t>(s[6] - '0');
-              if (idx == i) {
-                auto &b = std::get<1>(p)->button;
-                editMoistLayer->keyboard->inlineKeyboard[0].push_back(b);
-                break;
-              }
-            }
+          std::string butName = "edit_p" + std::to_string(i);
+          auto it = editMoistLayer->buttons.find(butName);
+          if (it != editMoistLayer->buttons.end()) {
+            editMoistLayer->keyboard->inlineKeyboard[0].push_back(it->second->button);
           }
         }
       },
