@@ -113,12 +113,11 @@ void sendWarning(uint8_t waterSensIdx) {
 }
 
 void updateSettings(Settings &settings) {
-  uint8_t buf[sizeof(settings) + 1];
+  uint8_t buf[sizeof(settings)];
   buf[0] = REQUEST_SETTINGS;
-  memcpy(buf + 1, &settings, sizeof(settings));
   client.write(reinterpret_cast<const char *>(buf), 1);
   client.flush();
-  unsigned readBytes = client.read(buf, sizeof(settings) + 1);
+  unsigned readBytes = client.read(buf, sizeof(settings));
   if (readBytes < sizeof(settings)) {
     // the server has no settings stored, yet -> sending our current settings to
     // the server
