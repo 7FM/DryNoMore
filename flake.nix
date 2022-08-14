@@ -16,6 +16,7 @@
           openssl
           boost
           zlib
+          libyamlcpp
         ];
       };
     }
