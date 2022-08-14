@@ -36,10 +36,6 @@
 
 // We can't increase the serial speed much with our low CPU frequency!
 #define SERIAL_BAUD_RATE 600
-// TODO investigate/adjust! I seriously doubt that we can use 14 MHz if the CPU
-// runs at 62.5 kHz -> SPI cna run at max at F_CPU/2 speed, but the library
-// handles this correctly, so no need to change the setting!
-#define SPI_ETHERNET_SETTINGS SPISettings(14000000, MSBFIRST, SPI_MODE0)
 
 #define MEASURE_DELAY_MS 200
 #define POWER_ON_DELAY_MS 500
