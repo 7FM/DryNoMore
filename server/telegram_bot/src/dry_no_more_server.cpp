@@ -51,21 +51,33 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
       if (state.settingsWrap.valid) {
         // send current settings!
         // TODO prey that the byte order is correct!
-        write(client_fd,
-              reinterpret_cast<const void *>(&state.settingsWrap.settings),
-              sizeof(state.settingsWrap.settings));
+        int res =
+            write(client_fd,
+                  reinterpret_cast<const void *>(&state.settingsWrap.settings),
+                  sizeof(state.settingsWrap.settings));
+        if (res <= 0) {
+          std::cerr << "DryNoMore status server: writing settings failed: ";
+          printErrno();
+        } else if (res != sizeof(state.settingsWrap.settings)) {
+          std::cerr << "DryNoMore status server: WARNING written only " << res
+                    << "/" << sizeof(state.settingsWrap.settings)
+                    << " of the settings bytes!";
+        }
       } else {
         // We have no settings yet! -> unlock
         lock.unlock();
         // send dummy response as indication that we want to receive the
         // settings ourselves!
         uint8_t dummyData = 42;
-        // TODO check result
-        write(client_fd, reinterpret_cast<const void *>(&dummyData),
-              sizeof(dummyData));
+        int res = write(client_fd, reinterpret_cast<const void *>(&dummyData),
+                        sizeof(dummyData));
+        if (res <= 0) {
+          std::cerr << "DryNoMore status server: dummy write failed: ";
+          printErrno();
+          return;
+        }
 
         // receive currently used settings
-        // TODO check result
         readSize =
             read(client_fd, reinterpret_cast<void *>(buf.get()), bufSize);
 
