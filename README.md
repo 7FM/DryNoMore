@@ -35,7 +35,7 @@ Pin-Priority: 200
 Then you can use `apt -t testing install gcc` to install `gcc-11`.
 </details>
 
-For NixOS see `flake.nix`.
+For NixOS see [`flake.nix`](./flake.nix).
 
 ### Compilation
 - For the Arduino project simply use PlatformIO, i.e. through the [PlatformIO IDE](https://platformio.org/install/ide?install=vscode).
