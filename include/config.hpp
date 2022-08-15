@@ -108,6 +108,10 @@
   { 500, 500, 500, 500, 500, 500 }
 #define DEFAULT_MOISTURE_TARGET_THRESHOLDS                                     \
   { 50, 50, 50, 50, 50, 50 }
+#define DEFAULT_MOIST_TO_WATER_MAPPINGS                                        \
+  { 0, 0, 0, 0, 0, 0 }
+#define DEFAULT_PLANT_SKIP_VALUES                                              \
+  { 1, 1, 1, 1, 1, 1 }
 
 #define DEFAULT_WATER_MIN_VALUES                                               \
   { 180, 180 }
