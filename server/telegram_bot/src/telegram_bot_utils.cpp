@@ -181,8 +181,8 @@ std::string generateStatusTable(const Status &status) {
 
   for (int i = 0; i < status.numPlants; ++i) {
     row = {"P" + std::to_string(i + 1),
-           std::to_string(status.beforeMoistureLevels[i]) + " %",
-           std::to_string(status.afterMoistureLevels[i]) + " %"};
+           (status.beforeMoistureLevels[i] != UNDEFINED_LEVEL ? std::to_string(status.beforeMoistureLevels[i]) : "--") + " %",
+           (status.afterMoistureLevels[i] != UNDEFINED_LEVEL ? std::to_string(status.afterMoistureLevels[i]) : "--") + " %"};
     table.push_back(std::move(row));
   }
 
@@ -194,8 +194,8 @@ std::string generateStatusTable(const Status &status) {
 
   for (int i = 0; i < status.numWaterSensors; ++i) {
     row = {"W" + std::to_string(i + 1),
-           std::to_string(status.beforeWaterLevels[i]) + " %",
-           std::to_string(status.afterWaterLevels[i]) + " %"};
+           (status.beforeWaterLevels[i] != UNDEFINED_LEVEL ? std::to_string(status.beforeWaterLevels[i]) : "--") + " %",
+           (status.afterWaterLevels[i] != UNDEFINED_LEVEL ? std::to_string(status.afterWaterLevels[i]) : "--") + " %"};
     table.push_back(std::move(row));
   }
 
