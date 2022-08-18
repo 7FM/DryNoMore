@@ -61,7 +61,7 @@ void powerUpEthernet() {
   W5100.writePHYCFGR_W5500(W5500_OPMD | W5500_OPM_10_HALF);
   W5100.writePHYCFGR_W5500(W5500_RST_LOW | W5500_OPMD | W5500_OPM_10_HALF);
 
-  if (Ethernet.begin(mac) == 0) {
+  if (Ethernet.begin(mac, 10 /* tries */) == 0) {
     SERIALprintlnP(PSTR("Failed to configure Ethernet using DHCP"));
     // Check for Ethernet hardware present
     if (Ethernet.hardwareStatus() == EthernetNoHardware) {
