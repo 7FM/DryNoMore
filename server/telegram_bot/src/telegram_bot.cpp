@@ -117,7 +117,8 @@ void runDryNoMoreTelegramBot(const std::string &token,
         std::string message = msgPrefix + msg->msg;
 
         for (std::int64_t chat : broadcastChats) {
-          api.sendMessage(chat, message, false, 0, std::make_shared<TgBot::GenericReply>(), "Markdown");
+          api.sendMessage(chat, message, false, 0,
+                          std::make_shared<TgBot::GenericReply>(), "Markdown");
         }
       }
     }
@@ -134,7 +135,8 @@ void runDryNoMoreTelegramBot(const std::string &token,
 
         std::string statusUpdate = generateStatusTable(statusCopy);
         for (std::int64_t chat : broadcastChats) {
-          api.sendMessage(chat, statusUpdate);
+          api.sendMessage(chat, statusUpdate, false, 0,
+                          std::make_shared<TgBot::GenericReply>(), "Markdown");
         }
       }
     }
