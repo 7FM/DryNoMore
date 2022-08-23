@@ -139,12 +139,13 @@ std::string generateMoistSettingsTable(const Settings &settings) {
   std::vector<std::vector<std::string>> table;
   table.reserve(1 + settings.numPlants);
 
-  std::vector<bool> printLeftWhitespace = {false, true,  true,
-                                           true,  false, true};
-  std::vector<bool> printRightWhitespace = {false, true,  true,
-                                            false, false, true};
-  std::vector<std::string> row{"ID",          "Min\nVal", "Max\nVal",
-                               "Moist\nGoal", "Wat\nSen", "Skp"};
+  std::vector<bool> printLeftWhitespace = {false, true, true, true,
+                                           false, true, true};
+  std::vector<bool> printRightWhitespace = {false, true, true, false,
+                                            false, true, true};
+  std::vector<std::string> row{
+      "ID",       "Min\nVal", "Max\nVal",      "Moist\nGoal",
+      "Wat\nSen", "Skp",      "Tick\nb/w\nWat"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < settings.numPlants; ++i) {
@@ -157,7 +158,8 @@ std::string generateMoistSettingsTable(const Settings &settings) {
            std::to_string(settings.sensConfs[i].maxValue),
            std::to_string(settings.targetMoistures[i]) + " %",
            sensorIdx ? "W2" : "W1",
-           skip ? "yes" : "no"};
+           skip ? "yes" : "no",
+           std::to_string(settings.ticksBetweenIrrigation[i])};
     table.push_back(std::move(row));
   }
 
@@ -176,13 +178,21 @@ std::string generateStatusTable(const Status &status) {
   std::vector<std::vector<std::string>> table;
   table.reserve(1 + status.numPlants);
 
-  std::vector<std::string> row{"ID", "Moisture\nBefore", "Moisture\nAfter"};
+  std::vector<std::string> row{"ID", "Moisture\nBefore", "Moisture\nAfter",
+                               "Ticks since\nirrigation"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < status.numPlants; ++i) {
     row = {"P" + std::to_string(i + 1),
-           (status.beforeMoistureLevels[i] != UNDEFINED_LEVEL ? std::to_string(status.beforeMoistureLevels[i]) : "--") + " %",
-           (status.afterMoistureLevels[i] != UNDEFINED_LEVEL ? std::to_string(status.afterMoistureLevels[i]) : "--") + " %"};
+           (status.beforeMoistureLevels[i] != UNDEFINED_LEVEL
+                ? std::to_string(status.beforeMoistureLevels[i])
+                : "--") +
+               " %",
+           (status.afterMoistureLevels[i] != UNDEFINED_LEVEL
+                ? std::to_string(status.afterMoistureLevels[i])
+                : "--") +
+               " %",
+           std::to_string(status.ticksSinceIrrigation[i])};
     table.push_back(std::move(row));
   }
 
@@ -194,8 +204,14 @@ std::string generateStatusTable(const Status &status) {
 
   for (int i = 0; i < status.numWaterSensors; ++i) {
     row = {"W" + std::to_string(i + 1),
-           (status.beforeWaterLevels[i] != UNDEFINED_LEVEL ? std::to_string(status.beforeWaterLevels[i]) : "--") + " %",
-           (status.afterWaterLevels[i] != UNDEFINED_LEVEL ? std::to_string(status.afterWaterLevels[i]) : "--") + " %"};
+           (status.beforeWaterLevels[i] != UNDEFINED_LEVEL
+                ? std::to_string(status.beforeWaterLevels[i])
+                : "--") +
+               " %",
+           (status.afterWaterLevels[i] != UNDEFINED_LEVEL
+                ? std::to_string(status.afterWaterLevels[i])
+                : "--") +
+               " %"};
     table.push_back(std::move(row));
   }
 

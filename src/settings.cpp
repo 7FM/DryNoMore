@@ -39,6 +39,7 @@ void defaultInitSettings(Settings &settings) {
     settings.sensConfs[i].minValue = moistSensMin[i];
     settings.sensConfs[i].maxValue = moistSensMax[i];
     settings.targetMoistures[i] = moistureTarget[i];
+    settings.ticksBetweenIrrigation[i] = 0;
   }
   for (uint8_t i = 0; i < 2; ++i) {
     settings.sensConfs[(MAX_MOISTURE_SENSOR_COUNT) + i].minValue =

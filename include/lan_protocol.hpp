@@ -6,6 +6,7 @@
 #define UNDEFINED_LEVEL 255
 
 PACKED_STRUCT_DEF(Status,
+                  uint8_t ticksSinceIrrigation[MAX_MOISTURE_SENSOR_COUNT];
                   uint8_t beforeMoistureLevels[MAX_MOISTURE_SENSOR_COUNT];
                   uint8_t afterMoistureLevels[MAX_MOISTURE_SENSOR_COUNT];
                   uint8_t beforeWaterLevels[2]; uint8_t afterWaterLevels[2];

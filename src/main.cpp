@@ -22,6 +22,7 @@ static constexpr uint16_t pumpPwrMap[] = PUMP_PWR_MAPPING;
 // Global vars
 static ShiftReg shiftReg;
 static Settings settings;
+static Status status;
 
 static inline bool isSoilTooDry(uint8_t pin, uint16_t min, uint16_t max,
                                 uint8_t target, uint8_t &measurement) {
@@ -165,6 +166,23 @@ static void powerSavingSettings() {
   disableDigitalOnAnalogPins();
 }
 
+static void setStatusUndef(Status &status) {
+  for (uint8_t i = 0; i < (MAX_MOISTURE_SENSOR_COUNT); ++i) {
+    status.beforeMoistureLevels[i] = UNDEFINED_LEVEL;
+    status.afterMoistureLevels[i] = UNDEFINED_LEVEL;
+  }
+  for (uint8_t i = 0; i < 2; ++i) {
+    status.beforeWaterLevels[i] = UNDEFINED_LEVEL;
+    status.afterWaterLevels[i] = UNDEFINED_LEVEL;
+  }
+}
+
+static void defaultInitStatus(Status &status) {
+  for (auto &t : status.ticksSinceIrrigation) {
+    t = 255;
+  }
+}
+
 void setup() {
   // Sanity checks
   static_assert(CONST_ARRAY_SIZE(moistSensPins) ==
@@ -180,6 +198,7 @@ void setup() {
 
   SERIALbegin(SERIAL_BAUD_RATE);
   defaultInitSettings(settings);
+  defaultInitStatus(status);
 
   // TODO update!
   for (uint8_t i = 0; i < settings.numPlants; ++i) {
@@ -273,8 +292,8 @@ void loop() {
   updateSettings(settings);
   powerDownEthernet();
   if (!settings.hardwareFailure) {
-    Status status;
-    memset(&status, UNDEFINED_LEVEL, sizeof(status));
+    bool statusChanged = false;
+    setStatusUndef(status);
     status.numPlants = settings.numPlants;
     status.numWaterSensors = getUsedWaterSens(settings);
 
@@ -287,9 +306,15 @@ void loop() {
 
     for (uint8_t idx = 0; !settings.hardwareFailure && idx < settings.numPlants;
          ++idx) {
-      uint8_t skip =
-          (settings.skipBitmap[idx / 8] >> (idx & 7 /*aka mod 8*/)) & 0x01;
-      if (skip == 0) {
+      bool skip = status.ticksSinceIrrigation[idx] <
+                      settings.ticksBetweenIrrigation[idx] ||
+                  ((settings.skipBitmap[idx / 8] >> (idx & 7 /*aka mod 8*/)) &
+                   0x01) != 0;
+      statusChanged |= !skip;
+      if (!skip) {
+        // This ensures that the tick counter will overflow to 0 -> reset its
+        // value!
+        status.ticksSinceIrrigation[idx] = 255;
         resCode |= checkMoisture(idx, status);
       }
     }
@@ -297,16 +322,30 @@ void loop() {
     shiftReg.disableOutput();
     shiftReg.update(0);
 
-    powerUpEthernet();
-    for (uint8_t i = 0; resCode != 0 && i < 2; ++i, resCode >>= 2) {
-      if (resCode & 0x02) {
-        sendErrorWaterEmpty(i);
-      } else if (resCode & 0x01) {
-        sendWarning(i);
-      }
+    // Update the tick counters!
+    for (auto &t : status.ticksSinceIrrigation) {
+      ++t;
     }
-    sendStatus(status);
-    powerDownEthernet();
+
+    // Only send messages if the status changed!
+    if (statusChanged) {
+      powerUpEthernet();
+      for (uint8_t i = 0; resCode != 0 && i < 2; ++i, resCode >>= 2) {
+        if (resCode & 0x02) {
+          sendErrorWaterEmpty(i);
+        } else if (resCode & 0x01) {
+          sendWarning(i);
+        }
+      }
+      sendStatus(status);
+      powerDownEthernet();
+    }
+  } else {
+    // Update the tick counters!
+    for (auto &t : status.ticksSinceIrrigation) {
+      // prevent overflows!
+      t = max(t, t + 1);
+    }
   }
   longSleep<SLEEP_PERIOD_MIN>();
 #endif

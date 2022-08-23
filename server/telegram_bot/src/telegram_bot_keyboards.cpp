@@ -602,6 +602,22 @@ KeyboardManager::KeyboardManager(Settings &settings,
       },
       editPercentage);
 
+  auto editTicksBwIrrigation = std::make_shared<Button>(
+      "Edit Ticks between Irrigation", "edit_ticks_bw_irrigation",
+      [editValueInfo](const TgBot::Api &, Settings &settings,
+                      TgBot::CallbackQuery::Ptr, Keyboard *) {
+        if (!editValueInfo->isWaterLvl) {
+          editValueInfo->minVal = 0;
+          editValueInfo->maxVal = 255;
+          editValueInfo->value16 = nullptr;
+          editValueInfo->value8 =
+              &(settings.ticksBetweenIrrigation[editValueInfo->idx]);
+        } else {
+          // TODO wtf
+        }
+      },
+      editValue);
+
   auto toggleWaterSensMappingBut = std::make_shared<Button>(
       "Toggle Water Sens", "toggle_water_sens",
       [editValueInfo](const TgBot::Api &api, Settings &settings,
@@ -625,6 +641,7 @@ KeyboardManager::KeyboardManager(Settings &settings,
       });
 
   Keyboard::addRow(editMoistDetailLayer, {editTargetMoistBut});
+  Keyboard::addRow(editMoistDetailLayer, {editTicksBwIrrigation});
   Keyboard::addRow(editMoistDetailLayer,
                    {toggleWaterSensMappingBut, toggleSkipBut});
   Keyboard::addRow(editMoistDetailLayer, {editMinValBut, editMaxValBut});
