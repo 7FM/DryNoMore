@@ -76,6 +76,38 @@ TgBot::InlineKeyboardMarkup::Ptr KeyboardManager::init() {
   return keyboards[0]->keyboard;
 }
 
+static void
+updateValue(int16_t valueUpdate,
+            const std::shared_ptr<EditValueInfo> &editValueInfo,
+            const std::vector<std::weak_ptr<Keyboard>> &keyboardHistory,
+            const TgBot::Api &api, Settings &settings,
+            TgBot::CallbackQuery::Ptr query, Keyboard *currentKb) {
+  int32_t value;
+  if (editValueInfo->value8 != nullptr) {
+    value = *(editValueInfo->value8);
+  } else if (editValueInfo->value16 != nullptr) {
+    value = get16BitValue(editValueInfo->value16);
+  }
+
+  // update value and write back!
+  value += valueUpdate;
+  value = std::max<int32_t>(std::min<int32_t>(value, editValueInfo->maxVal),
+                            editValueInfo->minVal);
+
+  if (editValueInfo->value8 != nullptr) {
+    *(editValueInfo->value8) = value;
+  } else if (editValueInfo->value16 != nullptr) {
+    set16BitValue(editValueInfo->value16, value);
+  }
+
+  if (keyboardHistory.empty()) {
+    return;
+  }
+
+  // update the message with the tables
+  keyboardHistory.back().lock()->callback(api, settings, query, currentKb);
+}
+
 KeyboardManager::KeyboardManager(Settings &settings,
                                  std::function<void()> handleCommit)
     : settings(settings) {
@@ -211,192 +243,49 @@ KeyboardManager::KeyboardManager(Settings &settings,
       [editValueInfo, this](const TgBot::Api &api, Settings &settings,
                             TgBot::CallbackQuery::Ptr query,
                             Keyboard *currentKb) {
-        uint16_t value = editValueInfo->maxVal;
-        if (editValueInfo->value8 != nullptr) {
-          value = *(editValueInfo->value8);
-        } else if (editValueInfo->value16 != nullptr) {
-          value = get16BitValue(editValueInfo->value16);
-        }
-
-        if (value < editValueInfo->maxVal) {
-          // update value and write back!
-          ++value;
-          if (editValueInfo->value8 != nullptr) {
-            *(editValueInfo->value8) = value;
-          } else if (editValueInfo->value16 != nullptr) {
-            set16BitValue(editValueInfo->value16, value);
-          }
-
-          if (keyboardHistory.empty()) {
-            return;
-          }
-
-          // update the message with the tables
-          keyboardHistory.back().lock()->callback(api, settings, query,
-                                                  currentKb);
-        }
+        updateValue(1, editValueInfo, keyboardHistory, api, settings, query,
+                    currentKb);
       });
   auto plus10 = std::make_shared<Button>(
       "+10", "plus_10",
       [editValueInfo, this](const TgBot::Api &api, Settings &settings,
                             TgBot::CallbackQuery::Ptr query,
                             Keyboard *currentKb) {
-        uint16_t value = editValueInfo->maxVal;
-        if (editValueInfo->value8 != nullptr) {
-          value = *(editValueInfo->value8);
-        } else if (editValueInfo->value16 != nullptr) {
-          value = get16BitValue(editValueInfo->value16);
-        }
-
-        // update value and write back!
-        if (value < editValueInfo->maxVal - 10 + 1) {
-          value += 10;
-        } else {
-          value = editValueInfo->maxVal;
-        }
-
-        if (editValueInfo->value8 != nullptr) {
-          *(editValueInfo->value8) = value;
-        } else if (editValueInfo->value16 != nullptr) {
-          set16BitValue(editValueInfo->value16, value);
-        }
-
-        if (keyboardHistory.empty()) {
-          return;
-        }
-
-        // update the message with the tables
-        keyboardHistory.back().lock()->callback(api, settings, query,
-                                                currentKb);
+        updateValue(10, editValueInfo, keyboardHistory, api, settings, query,
+                    currentKb);
       });
   auto plus100 = std::make_shared<Button>(
       "+100", "plus_100",
       [editValueInfo, this](const TgBot::Api &api, Settings &settings,
                             TgBot::CallbackQuery::Ptr query,
                             Keyboard *currentKb) {
-        uint16_t value = editValueInfo->maxVal;
-        if (editValueInfo->value8 != nullptr) {
-          value = *(editValueInfo->value8);
-        } else if (editValueInfo->value16 != nullptr) {
-          value = get16BitValue(editValueInfo->value16);
-        }
-
-        // update value and write back!
-        if (value < editValueInfo->maxVal - 100 + 1) {
-          value += 100;
-        } else {
-          value = editValueInfo->maxVal;
-        }
-
-        if (editValueInfo->value8 != nullptr) {
-          *(editValueInfo->value8) = value;
-        } else if (editValueInfo->value16 != nullptr) {
-          set16BitValue(editValueInfo->value16, value);
-        }
-
-        if (keyboardHistory.empty()) {
-          return;
-        }
-
-        // update the message with the tables
-        keyboardHistory.back().lock()->callback(api, settings, query,
-                                                currentKb);
+        updateValue(100, editValueInfo, keyboardHistory, api, settings, query,
+                    currentKb);
       });
+
   auto min1 = std::make_shared<Button>(
       "-1", "min_1",
       [editValueInfo, this](const TgBot::Api &api, Settings &settings,
                             TgBot::CallbackQuery::Ptr query,
                             Keyboard *currentKb) {
-        uint16_t value = editValueInfo->minVal;
-        if (editValueInfo->value8 != nullptr) {
-          value = *(editValueInfo->value8);
-        } else if (editValueInfo->value16 != nullptr) {
-          value = get16BitValue(editValueInfo->value16);
-        }
-
-        if (value > editValueInfo->minVal) {
-          // update value and write back!
-          --value;
-          if (editValueInfo->value8 != nullptr) {
-            *(editValueInfo->value8) = value;
-          } else if (editValueInfo->value16 != nullptr) {
-            set16BitValue(editValueInfo->value16, value);
-          }
-
-          if (keyboardHistory.empty()) {
-            return;
-          }
-
-          // update the message with the tables
-          keyboardHistory.back().lock()->callback(api, settings, query,
-                                                  currentKb);
-        }
+        updateValue(-1, editValueInfo, keyboardHistory, api, settings, query,
+                    currentKb);
       });
   auto min10 = std::make_shared<Button>(
       "-10", "min_10",
       [editValueInfo, this](const TgBot::Api &api, Settings &settings,
                             TgBot::CallbackQuery::Ptr query,
                             Keyboard *currentKb) {
-        uint16_t value = editValueInfo->minVal;
-        if (editValueInfo->value8 != nullptr) {
-          value = *(editValueInfo->value8);
-        } else if (editValueInfo->value16 != nullptr) {
-          value = get16BitValue(editValueInfo->value16);
-        }
-
-        // update value and write back!
-        if (value > editValueInfo->minVal + 10 - 1) {
-          value -= 10;
-        } else {
-          value = editValueInfo->minVal;
-        }
-
-        if (editValueInfo->value8 != nullptr) {
-          *(editValueInfo->value8) = value;
-        } else if (editValueInfo->value16 != nullptr) {
-          set16BitValue(editValueInfo->value16, value);
-        }
-
-        if (keyboardHistory.empty()) {
-          return;
-        }
-
-        // update the message with the tables
-        keyboardHistory.back().lock()->callback(api, settings, query,
-                                                currentKb);
+        updateValue(-10, editValueInfo, keyboardHistory, api, settings, query,
+                    currentKb);
       });
   auto min100 = std::make_shared<Button>(
       "-100", "min_100",
       [editValueInfo, this](const TgBot::Api &api, Settings &settings,
                             TgBot::CallbackQuery::Ptr query,
                             Keyboard *currentKb) {
-        uint16_t value = editValueInfo->minVal;
-        if (editValueInfo->value8 != nullptr) {
-          value = *(editValueInfo->value8);
-        } else if (editValueInfo->value16 != nullptr) {
-          value = get16BitValue(editValueInfo->value16);
-        }
-
-        // update value and write back!
-        if (value > editValueInfo->minVal + 100 - 1) {
-          value -= 100;
-        } else {
-          value = editValueInfo->minVal;
-        }
-
-        if (editValueInfo->value8 != nullptr) {
-          *(editValueInfo->value8) = value;
-        } else if (editValueInfo->value16 != nullptr) {
-          set16BitValue(editValueInfo->value16, value);
-        }
-
-        if (keyboardHistory.empty()) {
-          return;
-        }
-
-        // update the message with the tables
-        keyboardHistory.back().lock()->callback(api, settings, query,
-                                                currentKb);
+        updateValue(-100, editValueInfo, keyboardHistory, api, settings, query,
+                    currentKb);
       });
 
   const auto nop = [](const TgBot::Api &, Settings &, TgBot::CallbackQuery::Ptr,
