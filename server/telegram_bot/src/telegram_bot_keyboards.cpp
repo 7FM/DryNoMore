@@ -248,23 +248,26 @@ KeyboardManager::KeyboardManager(Settings &settings,
           value = get16BitValue(editValueInfo->value16);
         }
 
+        // update value and write back!
         if (value < editValueInfo->maxVal - 10 + 1) {
-          // update value and write back!
           value += 10;
-          if (editValueInfo->value8 != nullptr) {
-            *(editValueInfo->value8) = value;
-          } else if (editValueInfo->value16 != nullptr) {
-            set16BitValue(editValueInfo->value16, value);
-          }
-
-          if (keyboardHistory.empty()) {
-            return;
-          }
-
-          // update the message with the tables
-          keyboardHistory.back().lock()->callback(api, settings, query,
-                                                  currentKb);
+        } else {
+          value = editValueInfo->maxVal;
         }
+
+        if (editValueInfo->value8 != nullptr) {
+          *(editValueInfo->value8) = value;
+        } else if (editValueInfo->value16 != nullptr) {
+          set16BitValue(editValueInfo->value16, value);
+        }
+
+        if (keyboardHistory.empty()) {
+          return;
+        }
+
+        // update the message with the tables
+        keyboardHistory.back().lock()->callback(api, settings, query,
+                                                currentKb);
       });
   auto plus100 = std::make_shared<Button>(
       "+100", "plus_100",
@@ -278,23 +281,26 @@ KeyboardManager::KeyboardManager(Settings &settings,
           value = get16BitValue(editValueInfo->value16);
         }
 
+        // update value and write back!
         if (value < editValueInfo->maxVal - 100 + 1) {
-          // update value and write back!
           value += 100;
-          if (editValueInfo->value8 != nullptr) {
-            *(editValueInfo->value8) = value;
-          } else if (editValueInfo->value16 != nullptr) {
-            set16BitValue(editValueInfo->value16, value);
-          }
-
-          if (keyboardHistory.empty()) {
-            return;
-          }
-
-          // update the message with the tables
-          keyboardHistory.back().lock()->callback(api, settings, query,
-                                                  currentKb);
+        } else {
+          value = editValueInfo->maxVal;
         }
+
+        if (editValueInfo->value8 != nullptr) {
+          *(editValueInfo->value8) = value;
+        } else if (editValueInfo->value16 != nullptr) {
+          set16BitValue(editValueInfo->value16, value);
+        }
+
+        if (keyboardHistory.empty()) {
+          return;
+        }
+
+        // update the message with the tables
+        keyboardHistory.back().lock()->callback(api, settings, query,
+                                                currentKb);
       });
   auto min1 = std::make_shared<Button>(
       "-1", "min_1",
@@ -338,23 +344,26 @@ KeyboardManager::KeyboardManager(Settings &settings,
           value = get16BitValue(editValueInfo->value16);
         }
 
+        // update value and write back!
         if (value > editValueInfo->minVal + 10 - 1) {
-          // update value and write back!
           value -= 10;
-          if (editValueInfo->value8 != nullptr) {
-            *(editValueInfo->value8) = value;
-          } else if (editValueInfo->value16 != nullptr) {
-            set16BitValue(editValueInfo->value16, value);
-          }
-
-          if (keyboardHistory.empty()) {
-            return;
-          }
-
-          // update the message with the tables
-          keyboardHistory.back().lock()->callback(api, settings, query,
-                                                  currentKb);
+        } else {
+          value = editValueInfo->minVal;
         }
+
+        if (editValueInfo->value8 != nullptr) {
+          *(editValueInfo->value8) = value;
+        } else if (editValueInfo->value16 != nullptr) {
+          set16BitValue(editValueInfo->value16, value);
+        }
+
+        if (keyboardHistory.empty()) {
+          return;
+        }
+
+        // update the message with the tables
+        keyboardHistory.back().lock()->callback(api, settings, query,
+                                                currentKb);
       });
   auto min100 = std::make_shared<Button>(
       "-100", "min_100",
@@ -368,23 +377,26 @@ KeyboardManager::KeyboardManager(Settings &settings,
           value = get16BitValue(editValueInfo->value16);
         }
 
+        // update value and write back!
         if (value > editValueInfo->minVal + 100 - 1) {
-          // update value and write back!
           value -= 100;
-          if (editValueInfo->value8 != nullptr) {
-            *(editValueInfo->value8) = value;
-          } else if (editValueInfo->value16 != nullptr) {
-            set16BitValue(editValueInfo->value16, value);
-          }
-
-          if (keyboardHistory.empty()) {
-            return;
-          }
-
-          // update the message with the tables
-          keyboardHistory.back().lock()->callback(api, settings, query,
-                                                  currentKb);
+        } else {
+          value = editValueInfo->minVal;
         }
+
+        if (editValueInfo->value8 != nullptr) {
+          *(editValueInfo->value8) = value;
+        } else if (editValueInfo->value16 != nullptr) {
+          set16BitValue(editValueInfo->value16, value);
+        }
+
+        if (keyboardHistory.empty()) {
+          return;
+        }
+
+        // update the message with the tables
+        keyboardHistory.back().lock()->callback(api, settings, query,
+                                                currentKb);
       });
 
   const auto nop = [](const TgBot::Api &, Settings &, TgBot::CallbackQuery::Ptr,
@@ -407,7 +419,8 @@ KeyboardManager::KeyboardManager(Settings &settings,
           std::string butName = "edit_p" + std::to_string(i);
           auto it = editMoistLayer->buttons.find(butName);
           if (it != editMoistLayer->buttons.end()) {
-            editMoistLayer->keyboard->inlineKeyboard[0].push_back(it->second->button);
+            editMoistLayer->keyboard->inlineKeyboard[0].push_back(
+                it->second->button);
           }
         }
       },
