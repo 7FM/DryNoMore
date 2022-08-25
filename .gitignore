@@ -7,3 +7,4 @@
 .direnv
 build
 config.yaml
+*.FCStd1
