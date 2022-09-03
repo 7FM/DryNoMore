@@ -88,7 +88,6 @@ void runDryNoMoreTelegramBot(const std::string &token,
   // Set my commands
   api.setMyCommands(commands);
 
-  // TODO configure or rely on default settings?
   TgBot::TgLongPoll longPoll(bot);
   while (running.load(std::memory_order_relaxed)) {
 
