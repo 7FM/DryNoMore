@@ -109,6 +109,10 @@ void runDryNoMoreTelegramBot(const std::string &token,
             msgPrefix = "ERROR: ";
             break;
           }
+          case FAILURE_MSG: {
+            msgPrefix = "HARDWARE FAILURE: ";
+            break;
+          }
           default: {
             std::cerr << "Error invalid message in msgQueue!" << std::endl;
             continue;
