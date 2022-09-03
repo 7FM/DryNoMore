@@ -179,7 +179,7 @@ std::string generateStatusTable(const Status &status) {
   table.reserve(1 + status.numPlants);
 
   std::vector<std::string> row{"ID", "Moist\nBefore", "Moist\nAfter",
-                               "Ticks since\nirrigation"};
+                               "Ticks\nsince\nwater"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < status.numPlants; ++i) {

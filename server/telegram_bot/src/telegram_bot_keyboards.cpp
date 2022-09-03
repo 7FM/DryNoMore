@@ -82,11 +82,14 @@ updateValue(int16_t valueUpdate,
             const std::vector<std::weak_ptr<Keyboard>> &keyboardHistory,
             const TgBot::Api &api, Settings &settings,
             TgBot::CallbackQuery::Ptr query, Keyboard *currentKb) {
-  int32_t value;
+  int32_t value = 0;
   if (editValueInfo->value8 != nullptr) {
     value = *(editValueInfo->value8);
   } else if (editValueInfo->value16 != nullptr) {
     value = get16BitValue(editValueInfo->value16);
+  } else {
+    std::cerr << "CRITICAL ERROR: " __FILE__ " misused updateValue()" << std::endl;
+    return;
   }
 
   // update value and write back!
