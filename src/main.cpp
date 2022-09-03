@@ -97,11 +97,6 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
     } else if (cycle == timeoutCycles) {
       settings.hardwareFailure = true;
       shiftReg.disableOutput();
-
-      // Send HW error message!
-      powerUpEthernet();
-      sendErrorHardware(idx);
-      powerDownEthernet();
       break;
     }
     if (!isPumpActive) {
@@ -304,8 +299,8 @@ void loop() {
     shiftReg.update(0);
     shiftReg.enableOutput();
 
-    for (uint8_t idx = 0; !settings.hardwareFailure && idx < settings.numPlants;
-         ++idx) {
+    uint8_t idx = 0;
+    for (; !settings.hardwareFailure && idx < settings.numPlants; ++idx) {
       bool skip = status.ticksSinceIrrigation[idx] <
                       settings.ticksBetweenIrrigation[idx] ||
                   ((settings.skipBitmap[idx / 8] >> (idx & 7 /*aka mod 8*/)) &
@@ -328,16 +323,25 @@ void loop() {
     }
 
     // Only send messages if the status changed!
-    if (statusChanged) {
+    if (statusChanged || settings.hardwareFailure) {
       powerUpEthernet();
-      for (uint8_t i = 0; resCode != 0 && i < 2; ++i, resCode >>= 2) {
-        if (resCode & 0x02) {
-          sendErrorWaterEmpty(i);
-        } else if (resCode & 0x01) {
-          sendWarning(i);
-        }
+
+      if (settings.hardwareFailure) {
+        // Send HW error message!
+        sendErrorHardware(idx - 1);
       }
-      sendStatus(status);
+
+      if (statusChanged) {
+        for (uint8_t i = 0; resCode != 0 && i < 2; ++i, resCode >>= 2) {
+          if (resCode & 0x02) {
+            sendErrorWaterEmpty(i);
+          } else if (resCode & 0x01) {
+            sendWarning(i);
+          }
+        }
+        sendStatus(status);
+      }
+
       powerDownEthernet();
     }
   } else {

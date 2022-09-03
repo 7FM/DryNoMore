@@ -99,8 +99,8 @@ void sendStatus(const Status &status) {
   memcpy(buf + 1, &status, sizeof(status));
   client.write(reinterpret_cast<const char *>(buf), sizeof(status) + 1);
   client.flush();
-  // TODO pray for no endianess issues
 }
+
 void sendWarning(uint8_t waterSensIdx) {
   uint8_t buf[] = {WARN_MSG, 'r', 'u', 'n', 'n', 'i', 'n', 'g', ' ', 'l',
                    'o',      'w', ' ', 'o', 'n', ' ', 'w', 'a', 't', 'e',
@@ -134,7 +134,7 @@ void sendErrorWaterEmpty(uint8_t waterSensIdx) {
   uint8_t buf[] = {ERR_MSG, 'w', 'a', 't', 'e', 'r', ' ', 'r', 'e', 's',
                    'e',     'r', 'v', 'o', 'i', 'r', ' ', 'X', ' ', 'i',
                    's',     ' ', 'e', 'm', 'p', 't', 'y', '!'};
-  buf[CONST_ARRAY_SIZE(buf) - 11] = '0' + waterSensIdx;
+  buf[CONST_ARRAY_SIZE(buf) - 11] = '1' + waterSensIdx;
   client.write(reinterpret_cast<const char *>(buf), CONST_ARRAY_SIZE(buf));
   client.flush();
 }
@@ -148,7 +148,7 @@ void sendErrorHardware(uint8_t moistSensIdx) {
       ' ',         't', 'h', 'e', ' ', 'm', 'o', 'i', 's', 't', 'u', 'r',
       'e',         ' ', 's', 'e', 'n', 's', 'o', 'r', ' ', 'X', ' ', 'o',
       'r',         ' ', 'i', 't', 's', ' ', 'p', 'u', 'm', 'p', '!'};
-  buf[CONST_ARRAY_SIZE(buf) - 14] = '0' + moistSensIdx;
+  buf[CONST_ARRAY_SIZE(buf) - 14] = '1' + moistSensIdx;
   client.write(reinterpret_cast<const char *>(buf), CONST_ARRAY_SIZE(buf));
   client.flush();
 }
