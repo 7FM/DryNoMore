@@ -25,16 +25,18 @@ static Settings settings;
 static Status status;
 
 static inline bool isSoilTooDry(uint8_t pin, uint16_t min, uint16_t max,
-                                uint8_t target, uint8_t &measurement) {
+                                uint8_t target, uint8_t &measurement,
+                                uint16_t &rawMeasurement) {
   SERIALprintP(PSTR("Measured soil moisture"));
-  measurement = clampedMeasurement(pin, min, max);
+  measurement = clampedMeasurement(pin, min, max, rawMeasurement);
   return measurement < target;
 }
 
 static inline bool waterTankNotEmpty(uint8_t pin, uint16_t min, uint16_t max,
-                                     uint8_t empty, uint8_t &measurement) {
+                                     uint8_t empty, uint8_t &measurement,
+                                     uint16_t &rawMeasurement) {
   SERIALprintP(PSTR("Measured water tank level"));
-  measurement = clampedMeasurement(pin, min, max);
+  measurement = clampedMeasurement(pin, min, max, rawMeasurement);
   bool isEmpty = measurement <= empty;
   return !isEmpty;
 }
@@ -73,24 +75,33 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
       (static_cast<long>(IRRIGATION_TIMEOUT_SEC) * 1000 + measurementDuration) /
       measurementDuration;
 
+  uint16_t rawWaterMeasurement = UNDEFINED_LEVEL_16;
+  uint16_t rawMoistMeasurement = UNDEFINED_LEVEL_16;
+  uint8_t waterMeasurement = UNDEFINED_LEVEL_8;
+  uint8_t moistMeasurement = UNDEFINED_LEVEL_8;
   bool hasWaterLeft = true;
-  uint8_t waterMeasurement = UNDEFINED_LEVEL;
-  uint8_t moistMeasurement = UNDEFINED_LEVEL;
 
   auto initCheck = [&]() {
-    if (status.beforeWaterLevels[waterSensIdx] == UNDEFINED_LEVEL) {
+    if (status.beforeWaterLevels[waterSensIdx] == UNDEFINED_LEVEL_8) {
       status.beforeWaterLevels[waterSensIdx] = waterMeasurement;
     }
-    if (status.beforeMoistureLevels[idx] == UNDEFINED_LEVEL) {
+    if (status.beforeMoistureLevels[idx] == UNDEFINED_LEVEL_8) {
       status.beforeMoistureLevels[idx] = moistMeasurement;
+    }
+    if (status.beforeWaterLevelsRaw[waterSensIdx] == UNDEFINED_LEVEL_16) {
+      status.beforeWaterLevelsRaw[waterSensIdx] = rawWaterMeasurement;
+    }
+    if (status.beforeMoistureLevelsRaw[idx] == UNDEFINED_LEVEL_16) {
+      status.beforeMoistureLevelsRaw[idx] = rawMoistMeasurement;
     }
   };
 
   for (uint8_t cycle = 0;
-       (hasWaterLeft = waterTankNotEmpty(waterPin, waterMin, waterMax,
-                                         waterEmpty, waterMeasurement)) &&
-       isSoilTooDry(moistPin, moistMin, moistMax, moistTarget,
-                    moistMeasurement);
+       (hasWaterLeft =
+            waterTankNotEmpty(waterPin, waterMin, waterMax, waterEmpty,
+                              waterMeasurement, rawWaterMeasurement)) &&
+       isSoilTooDry(moistPin, moistMin, moistMax, moistTarget, moistMeasurement,
+                    rawMoistMeasurement);
        ++cycle) {
     if (cycle == 0) {
       initCheck();
@@ -112,7 +123,9 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
   shiftReg.enableOutput();
 
   initCheck();
+  status.afterWaterLevelsRaw[waterSensIdx] = rawWaterMeasurement;
   status.afterWaterLevels[waterSensIdx] = waterMeasurement;
+  status.afterMoistureLevelsRaw[idx] = rawMoistMeasurement;
   status.afterMoistureLevels[idx] = moistMeasurement;
 
   uint8_t retCode =
@@ -163,12 +176,16 @@ static void powerSavingSettings() {
 
 static void setStatusUndef(Status &status) {
   for (uint8_t i = 0; i < (MAX_MOISTURE_SENSOR_COUNT); ++i) {
-    status.beforeMoistureLevels[i] = UNDEFINED_LEVEL;
-    status.afterMoistureLevels[i] = UNDEFINED_LEVEL;
+    status.beforeMoistureLevels[i] = UNDEFINED_LEVEL_8;
+    status.afterMoistureLevels[i] = UNDEFINED_LEVEL_8;
+    status.beforeMoistureLevelsRaw[i] = UNDEFINED_LEVEL_16;
+    status.afterMoistureLevelsRaw[i] = UNDEFINED_LEVEL_16;
   }
   for (uint8_t i = 0; i < 2; ++i) {
-    status.beforeWaterLevels[i] = UNDEFINED_LEVEL;
-    status.afterWaterLevels[i] = UNDEFINED_LEVEL;
+    status.beforeWaterLevels[i] = UNDEFINED_LEVEL_8;
+    status.afterWaterLevels[i] = UNDEFINED_LEVEL_8;
+    status.beforeWaterLevelsRaw[i] = UNDEFINED_LEVEL_16;
+    status.afterWaterLevelsRaw[i] = UNDEFINED_LEVEL_16;
   }
 }
 
@@ -223,7 +240,7 @@ void setup() {
   // Heavily discussed in
   // https://arduino.stackexchange.com/questions/88319/power-saving-configuration-of-unconnected-pins
   // TLDR; either INPUT_PULLUP or OUTPUT LOW where INPUT_PULLUP seems to suffer
-  // a bit from leak current
+  // a bit from leakage current
   for (auto p : unusedDigitalPins) {
     pinMode(p, OUTPUT);
     digitalWrite(p, LOW);

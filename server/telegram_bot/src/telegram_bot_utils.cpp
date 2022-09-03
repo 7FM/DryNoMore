@@ -184,11 +184,11 @@ std::string generateStatusTable(const Status &status) {
 
   for (int i = 0; i < status.numPlants; ++i) {
     row = {"P" + std::to_string(i + 1),
-           (status.beforeMoistureLevels[i] != UNDEFINED_LEVEL
+           (status.beforeMoistureLevels[i] != UNDEFINED_LEVEL_8
                 ? std::to_string(status.beforeMoistureLevels[i])
                 : "--") +
                " %",
-           (status.afterMoistureLevels[i] != UNDEFINED_LEVEL
+           (status.afterMoistureLevels[i] != UNDEFINED_LEVEL_8
                 ? std::to_string(status.afterMoistureLevels[i])
                 : "--") +
                " %",
@@ -204,11 +204,11 @@ std::string generateStatusTable(const Status &status) {
 
   for (int i = 0; i < status.numWaterSensors; ++i) {
     row = {"W" + std::to_string(i + 1),
-           (status.beforeWaterLevels[i] != UNDEFINED_LEVEL
+           (status.beforeWaterLevels[i] != UNDEFINED_LEVEL_8
                 ? std::to_string(status.beforeWaterLevels[i])
                 : "--") +
                " %",
-           (status.afterWaterLevels[i] != UNDEFINED_LEVEL
+           (status.afterWaterLevels[i] != UNDEFINED_LEVEL_8
                 ? std::to_string(status.afterWaterLevels[i])
                 : "--") +
                " %"};
@@ -216,7 +216,34 @@ std::string generateStatusTable(const Status &status) {
   }
 
   std::string waterSensorTable(generateTable(table));
+  table.clear();
+
+  row = {"ID", "Raw\nBefore", "Raw\nAfter"};
+  table.push_back(std::move(row));
+
+  for (int i = 0; i < status.numPlants; ++i) {
+    row = {"P" + std::to_string(i + 1),
+           (status.beforeMoistureLevelsRaw[i] != UNDEFINED_LEVEL_16
+                ? std::to_string(status.beforeMoistureLevelsRaw[i])
+                : "--"),
+           (status.afterMoistureLevelsRaw[i] != UNDEFINED_LEVEL_16
+                ? std::to_string(status.afterMoistureLevelsRaw[i])
+                : "--")};
+    table.push_back(std::move(row));
+  }
+  for (int i = 0; i < status.numWaterSensors; ++i) {
+    row = {"W" + std::to_string(i + 1),
+           (status.beforeWaterLevelsRaw[i] != UNDEFINED_LEVEL_16
+                ? std::to_string(status.beforeWaterLevelsRaw[i])
+                : "--"),
+           (status.afterWaterLevelsRaw[i] != UNDEFINED_LEVEL_16
+                ? std::to_string(status.afterWaterLevelsRaw[i])
+                : "--")};
+    table.push_back(std::move(row));
+  }
+
+  std::string rawSensorReadingsTable(generateTable(table));
 
   return "Plant Status:\n" + moistureSensorTable + "Water-level Status:\n" +
-         waterSensorTable;
+         waterSensorTable + "Raw Sensor Readings:\n" + rawSensorReadingsTable;
 }

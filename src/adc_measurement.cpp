@@ -39,13 +39,17 @@ uint16_t adcMeasurement(uint8_t pin) {
   return median;
 }
 
-uint8_t clampedMeasurement(uint8_t pin, uint16_t min, uint16_t max) {
+uint8_t clampedMeasurement(uint8_t pin, uint16_t min, uint16_t max,
+                           uint16_t &rawMeasurement) {
   uint16_t value = adcMeasurement(pin);
   SERIALprintP(PSTR(" raw: "));
   SERIALprint(value);
   SERIALprintP(PSTR(" clamped: "));
   // clamp the value first
   value = constrain(value, min, max);
+
+  rawMeasurement = value;
+
   // inverted mapping as an increase in moisture/water level results in a lower
   // ADC value
   uint8_t percentage = 100 - map(value, min, max, 0, 100);
