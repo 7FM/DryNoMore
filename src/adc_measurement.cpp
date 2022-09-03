@@ -45,10 +45,11 @@ uint8_t clampedMeasurement(uint8_t pin, uint16_t min, uint16_t max,
   SERIALprintP(PSTR(" raw: "));
   SERIALprint(value);
   SERIALprintP(PSTR(" clamped: "));
+  // save the unclamped raw measurement value
+  rawMeasurement = value;
+
   // clamp the value first
   value = constrain(value, min, max);
-
-  rawMeasurement = value;
 
   // inverted mapping as an increase in moisture/water level results in a lower
   // ADC value
