@@ -266,7 +266,8 @@ void loop() {
     _delay_ms(POWER_ON_DELAY_MS);
 
     uint8_t measurement;
-    isSoilTooDry(moistPin, moistMin, moistMax, moistTarget, measurement);
+    uint16_t rawMeasurement;
+    isSoilTooDry(moistPin, moistMin, moistMax, moistTarget, measurement, rawMeasurement);
 
     // Finally turn the power of the sensors and the pump off
     shiftReg.disableOutput();
@@ -288,7 +289,8 @@ void loop() {
     _delay_ms(POWER_ON_DELAY_MS);
 
     uint8_t measurement;
-    waterTankNotEmpty(waterPin, waterMin, waterMax, waterEmpty, measurement);
+    uint16_t rawMeasurement;
+    waterTankNotEmpty(waterPin, waterMin, waterMax, waterEmpty, measurement, rawMeasurement);
 
     // Finally turn the power of the sensors and the pump off
     shiftReg.disableOutput();
