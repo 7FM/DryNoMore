@@ -149,6 +149,8 @@ void runDryNoMoreTelegramBot(const std::string &token,
       longPoll.start();
     } catch (const TgBot::TgException &e) {
       std::cerr << "telegram bot error: " << e.what() << std::endl;
+    } catch (const boost::system::system_error& wtf) {
+      std::cerr << "boost system error: " << wtf.what() << std::endl;
     }
   }
 }
