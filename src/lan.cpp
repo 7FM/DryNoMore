@@ -138,6 +138,7 @@ void sendErrorWaterEmpty(uint8_t waterSensIdx) {
   client.write(reinterpret_cast<const char *>(buf), CONST_ARRAY_SIZE(buf));
   client.flush();
 }
+
 void sendErrorHardware(uint8_t moistSensIdx) {
   uint8_t buf[] = {
       FAILURE_MSG, 'i', 'r', 'r', 'i', 'g', 'a', 't', 'i', 'o', 'n', ' ',

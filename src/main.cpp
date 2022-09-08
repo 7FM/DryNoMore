@@ -196,6 +196,8 @@ static void defaultInitStatus(Status &status) {
 }
 
 static void analogPowerSave() {
+  // TODO we might prefer output LOW for connected sensors as they have an
+  // capacitor and resistor connected to this pin
   for (uint8_t i = 0; i < CONST_ARRAY_SIZE(moistSensPins); ++i) {
     // initialize all unused pins, setting this for used pins too results in
     // invalid readings
@@ -210,16 +212,28 @@ static void analogPowerSave() {
   }
 }
 
-static void reinitAnalogPins() {
-  for (uint8_t i = 0; i < settings.numPlants; ++i) {
-    // TODO rather use INPUT_PULLUP / OUTPUT and change right before turning on
-    // the power of the sensor???
-    pinMode(moistSensPins[i], INPUT);
+static void deinitUnusedAnalogPins() {
+  for (uint8_t i = settings.numPlants; i < CONST_ARRAY_SIZE(moistSensPins);
+       ++i) {
+    // initialize all unused pins, setting this for used pins too results in
+    // invalid readings
+    // TODO prefer pullup input or rather output?
+    pinMode(moistSensPins[i], INPUT_PULLUP);
   }
   const uint8_t usedWaterSens = getUsedWaterSens(settings);
-  for (uint8_t i = 0; i < usedWaterSens; ++i) {
-    // TODO rather use INPUT_PULLUP / OUTPUT and change right before turning on
-    // the power of the sensor???
+  for (uint8_t i = usedWaterSens; i < CONST_ARRAY_SIZE(waterSensPins); ++i) {
+    // initialize all unused pins, setting this for used pins too results in
+    // invalid readings
+    // TODO prefer pullup input or rather output?
+    pinMode(waterSensPins[i], INPUT_PULLUP);
+  }
+}
+
+static void initAnalogPins() {
+  for (uint8_t i = 0; i < CONST_ARRAY_SIZE(moistSensPins); ++i) {
+    pinMode(moistSensPins[i], INPUT);
+  }
+  for (uint8_t i = 0; i < CONST_ARRAY_SIZE(waterSensPins); ++i) {
     pinMode(waterSensPins[i], INPUT);
   }
 }
@@ -259,7 +273,8 @@ void loop() {
   // Setup modes
   // ===================================================================
 #ifdef DUMP_SOIL_MOISTURES_MEASUREMENTS
-  reinitAnalogPins();
+  initAnalogPins();
+  deinitUnusedAnalogPins();
   for (uint8_t idx = 0; idx < settings.numPlants; ++idx) {
     const auto moistPin = moistSensPins[idx];
     const auto moistSensMask = moistSensPwrMap[idx];
@@ -281,7 +296,8 @@ void loop() {
     shiftReg.disableOutput();
   }
 #elif defined(DUMP_WATER_LEVEL_MEASUREMENTS)
-  reinitAnalogPins();
+  initAnalogPins();
+  deinitUnusedAnalogPins();
   const uint8_t usedWaterSens = getUsedWaterSens(settings);
   for (uint8_t idx = 0; idx < usedWaterSens; ++idx) {
     const auto waterPin = waterSensPins[idx];
@@ -310,10 +326,13 @@ void loop() {
   // Production mode
   // ===================================================================
 
-  // Check all plants!
+  // Switch to normal input mode early to ensure enough time to discharge all
+  // caps
+  initAnalogPins();
   // allow remote to reset the hardware failure flag
   powerUpEthernet();
   updateSettings(settings);
+  deinitUnusedAnalogPins();
   powerDownEthernet();
   if (!settings.hardwareFailure) {
     bool statusChanged = false;
@@ -325,7 +344,6 @@ void loop() {
     // that the water is empty! the lsb bits are used for the first sensor.
     uint8_t resCode = 0;
 
-    reinitAnalogPins();
     shiftReg.update(0);
     shiftReg.enableOutput();
 
@@ -376,6 +394,7 @@ void loop() {
       powerDownEthernet();
     }
   } else {
+    analogPowerSave();
     // Update the tick counters!
     for (auto &t : status.ticksSinceIrrigation) {
       // prevent overflows!
