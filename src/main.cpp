@@ -195,6 +195,35 @@ static void defaultInitStatus(Status &status) {
   }
 }
 
+static void analogPowerSave() {
+  for (uint8_t i = 0; i < CONST_ARRAY_SIZE(moistSensPins); ++i) {
+    // initialize all unused pins, setting this for used pins too results in
+    // invalid readings
+    // TODO prefer pullup input or rather output?
+    pinMode(moistSensPins[i], INPUT_PULLUP);
+  }
+  for (uint8_t i = 0; i < CONST_ARRAY_SIZE(waterSensPins); ++i) {
+    // initialize all unused pins, setting this for used pins too results in
+    // invalid readings
+    // TODO prefer pullup input or rather output?
+    pinMode(waterSensPins[i], INPUT_PULLUP);
+  }
+}
+
+static void reinitAnalogPins() {
+  for (uint8_t i = 0; i < settings.numPlants; ++i) {
+    // TODO rather use INPUT_PULLUP / OUTPUT and change right before turning on
+    // the power of the sensor???
+    pinMode(moistSensPins[i], INPUT);
+  }
+  const uint8_t usedWaterSens = getUsedWaterSens(settings);
+  for (uint8_t i = 0; i < usedWaterSens; ++i) {
+    // TODO rather use INPUT_PULLUP / OUTPUT and change right before turning on
+    // the power of the sensor???
+    pinMode(waterSensPins[i], INPUT);
+  }
+}
+
 void setup() {
   // Sanity checks
   static_assert(CONST_ARRAY_SIZE(moistSensPins) ==
@@ -212,31 +241,8 @@ void setup() {
   defaultInitSettings(settings);
   defaultInitStatus(status);
 
-  // TODO update!
-  for (uint8_t i = 0; i < settings.numPlants; ++i) {
-    // TODO rather use INPUT_PULLUP / OUTPUT and change right before turning on
-    // the power of the sensor???
-    pinMode(moistSensPins[i], INPUT);
-  }
-  for (uint8_t i = settings.numPlants; i < CONST_ARRAY_SIZE(moistSensPins);
-       ++i) {
-    // initialize all unused pins, setting this for used pins too results in
-    // invalid readings
-    // TODO prefer pullup input or rather output?
-    pinMode(moistSensPins[i], INPUT_PULLUP);
-  }
-  const uint8_t usedWaterSens = getUsedWaterSens(settings);
-  for (uint8_t i = 0; i < usedWaterSens; ++i) {
-    // TODO rather use INPUT_PULLUP / OUTPUT and change right before turning on
-    // the power of the sensor???
-    pinMode(waterSensPins[i], INPUT);
-  }
-  for (uint8_t i = usedWaterSens; i < CONST_ARRAY_SIZE(waterSensPins); ++i) {
-    // initialize all unused pins, setting this for used pins too results in
-    // invalid readings
-    // TODO prefer pullup input or rather output?
-    pinMode(waterSensPins[i], INPUT_PULLUP);
-  }
+  analogPowerSave();
+
   // Heavily discussed in
   // https://arduino.stackexchange.com/questions/88319/power-saving-configuration-of-unconnected-pins
   // TLDR; either INPUT_PULLUP or OUTPUT LOW where INPUT_PULLUP seems to suffer
@@ -253,6 +259,7 @@ void loop() {
   // Setup modes
   // ===================================================================
 #ifdef DUMP_SOIL_MOISTURES_MEASUREMENTS
+  reinitAnalogPins();
   for (uint8_t idx = 0; idx < settings.numPlants; ++idx) {
     const auto moistPin = moistSensPins[idx];
     const auto moistSensMask = moistSensPwrMap[idx];
@@ -267,12 +274,14 @@ void loop() {
 
     uint8_t measurement;
     uint16_t rawMeasurement;
-    isSoilTooDry(moistPin, moistMin, moistMax, moistTarget, measurement, rawMeasurement);
+    isSoilTooDry(moistPin, moistMin, moistMax, moistTarget, measurement,
+                 rawMeasurement);
 
     // Finally turn the power of the sensors and the pump off
     shiftReg.disableOutput();
   }
 #elif defined(DUMP_WATER_LEVEL_MEASUREMENTS)
+  reinitAnalogPins();
   const uint8_t usedWaterSens = getUsedWaterSens(settings);
   for (uint8_t idx = 0; idx < usedWaterSens; ++idx) {
     const auto waterPin = waterSensPins[idx];
@@ -290,7 +299,8 @@ void loop() {
 
     uint8_t measurement;
     uint16_t rawMeasurement;
-    waterTankNotEmpty(waterPin, waterMin, waterMax, waterEmpty, measurement, rawMeasurement);
+    waterTankNotEmpty(waterPin, waterMin, waterMax, waterEmpty, measurement,
+                      rawMeasurement);
 
     // Finally turn the power of the sensors and the pump off
     shiftReg.disableOutput();
@@ -315,6 +325,7 @@ void loop() {
     // that the water is empty! the lsb bits are used for the first sensor.
     uint8_t resCode = 0;
 
+    reinitAnalogPins();
     shiftReg.update(0);
     shiftReg.enableOutput();
 
@@ -335,6 +346,7 @@ void loop() {
 
     shiftReg.disableOutput();
     shiftReg.update(0);
+    analogPowerSave();
 
     // Update the tick counters!
     for (auto &t : status.ticksSinceIrrigation) {
