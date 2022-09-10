@@ -261,9 +261,13 @@ void setup() {
   // https://arduino.stackexchange.com/questions/88319/power-saving-configuration-of-unconnected-pins
   // TLDR; either INPUT_PULLUP or OUTPUT LOW where INPUT_PULLUP seems to suffer
   // a bit from leakage current
+  // However if we set the TX & RX pins to LOW then their LEDs will always be
+  // on! so lets settle with INPUT_PULLUP and hope that the leakage current is
+  // much lower than powering the LEDs!
   for (auto p : unusedDigitalPins) {
-    pinMode(p, OUTPUT);
-    digitalWrite(p, LOW);
+    // pinMode(p, OUTPUT);
+    // digitalWrite(p, LOW);
+    pinMode(p, INPUT_PULLUP);
   }
 }
 
