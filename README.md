@@ -59,8 +59,14 @@ TODO list options
 </details>
 
 ## Hardware
-### Revisions:
-- v0.1 known bugs:
+### Known Flaws:
+- v0.1:
     - Barrel Jack power input (J10) has swapped polarity.
+- v0.2:
+    - Main power consumption is caused by the W5500 Ethernet module
 
-- v0.2 known bugs:
+### Changelog:
+#### v0.1 &rarr; v0.2:
+- fix power input polarity
+#### v0.2 &rarr; v0.3
+- add mosfet to switch off the W5500 Ethernet module
