@@ -129,7 +129,7 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
   status.afterMoistureLevels[idx] = moistMeasurement;
 
   uint8_t retCode =
-      (hasWaterLeft ? 0 : 0x02) | (waterMeasurement <= waterWarning ? 0x04 : 0);
+      (hasWaterLeft ? 0 : 0x02) | (waterMeasurement <= waterWarning ? 0x01 : 0);
   return retCode << (waterSensIdx << 1);
 }
 
