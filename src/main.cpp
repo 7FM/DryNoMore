@@ -198,34 +198,30 @@ static void defaultInitStatus(Status &status) {
 static void analogPowerSave() {
   // TODO we might prefer output LOW for connected sensors as they have an
   // capacitor and resistor connected to this pin
-  for (uint8_t i = 0; i < CONST_ARRAY_SIZE(moistSensPins); ++i) {
-    // initialize all unused pins, setting this for used pins too results in
-    // invalid readings
-    // TODO prefer pullup input or rather output?
-    pinMode(moistSensPins[i], INPUT_PULLUP);
+  for (auto p : moistSensPins) {
+    // pinMode(p, INPUT_PULLUP);
+    pinMode(p, OUTPUT);
+    digitalWrite(p, LOW);
   }
-  for (uint8_t i = 0; i < CONST_ARRAY_SIZE(waterSensPins); ++i) {
-    // initialize all unused pins, setting this for used pins too results in
-    // invalid readings
-    // TODO prefer pullup input or rather output?
-    pinMode(waterSensPins[i], INPUT_PULLUP);
+  for (auto p : waterSensPins) {
+    // pinMode(p, INPUT_PULLUP);
+    pinMode(p, OUTPUT);
+    digitalWrite(p, LOW);
   }
 }
 
 static void deinitUnusedAnalogPins() {
   for (uint8_t i = settings.numPlants; i < CONST_ARRAY_SIZE(moistSensPins);
        ++i) {
-    // initialize all unused pins, setting this for used pins too results in
-    // invalid readings
-    // TODO prefer pullup input or rather output?
-    pinMode(moistSensPins[i], INPUT_PULLUP);
+    // pinMode(moistSensPins[i], INPUT_PULLUP);
+    pinMode(moistSensPins[i], OUTPUT);
+    digitalWrite(moistSensPins[i], LOW);
   }
   const uint8_t usedWaterSens = getUsedWaterSens(settings);
   for (uint8_t i = usedWaterSens; i < CONST_ARRAY_SIZE(waterSensPins); ++i) {
-    // initialize all unused pins, setting this for used pins too results in
-    // invalid readings
-    // TODO prefer pullup input or rather output?
-    pinMode(waterSensPins[i], INPUT_PULLUP);
+    // pinMode(waterSensPins[i], INPUT_PULLUP);
+    pinMode(waterSensPins[i], OUTPUT);
+    digitalWrite(waterSensPins[i], LOW);
   }
 }
 
