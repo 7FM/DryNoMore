@@ -73,6 +73,8 @@ int main(int argc, char **argv) {
 
   StateWrapper state;
 
+  //TODO read settings from yaml file!
+
 // #define DEBUG_SETTINGS
 #ifdef DEBUG_SETTINGS
 #warning "DEBUG settings activated, do not use in production!"
@@ -122,6 +124,8 @@ int main(int argc, char **argv) {
   for (auto c : broadcastChats) {
     config["user_chats"].push_back(c);
   }
+
+  //TODO write settings to yaml file!
 
   std::ofstream out(argv[1]);
   out << config;
