@@ -245,6 +245,9 @@ void setup() {
   static_assert((MAX_MOISTURE_SENSOR_COUNT) == CONST_ARRAY_SIZE(pumpPwrMap));
 
   powerSavingSettings();
+
+  // TODO we will probably need this in hardware revision v0.3 in every
+  // iteration -> adjust library to our need!
   setupEthernet();
 
   SERIALbegin(SERIAL_BAUD_RATE);
@@ -381,6 +384,9 @@ void loop() {
       }
 
       if (statusChanged) {
+        // TODO only the first message gets received... debug on a networking
+        // level! For now always send the status as it implicitly contains the water warnings!
+        sendStatus(status);
         for (uint8_t i = 0; resCode != 0 && i < 2; ++i, resCode >>= 2) {
           if (resCode & 0x02) {
             sendErrorWaterEmpty(i);
@@ -388,7 +394,6 @@ void loop() {
             sendWarning(i);
           }
         }
-        sendStatus(status);
       }
 
       powerDownEthernet();
