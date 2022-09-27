@@ -7,6 +7,9 @@ void defaultInitSettings(Settings &settings) {
   static constexpr uint16_t moistSensMax[] = DEFAULT_MOISTURE_MAX_VALUES;
   static constexpr uint8_t moistureTarget[] =
       DEFAULT_MOISTURE_TARGET_THRESHOLDS;
+  static constexpr uint8_t burstDuration[] = DEFAULT_BURST_DURATION_SEC;
+  static constexpr uint8_t burstDelay[] = DEFAULT_BURST_DELAY_SEC;
+  static constexpr uint8_t maxBursts[] = DEFAULT_MAX_BURSTS;
   static constexpr bool moistureToWaterMappings[] =
       DEFAULT_MOIST_TO_WATER_MAPPINGS;
   static constexpr bool skipPlant[] = DEFAULT_PLANT_SKIP_VALUES;
@@ -23,6 +26,12 @@ void defaultInitSettings(Settings &settings) {
                 CONST_ARRAY_SIZE(moistureTarget));
   static_assert(CONST_ARRAY_SIZE(moistureToWaterMappings) ==
                 CONST_ARRAY_SIZE(moistureTarget));
+  static_assert(CONST_ARRAY_SIZE(burstDuration) ==
+                CONST_ARRAY_SIZE(moistureTarget));
+  static_assert(CONST_ARRAY_SIZE(burstDelay) ==
+                CONST_ARRAY_SIZE(moistureTarget));
+  static_assert(CONST_ARRAY_SIZE(maxBursts) ==
+                CONST_ARRAY_SIZE(moistureTarget));
   static_assert(CONST_ARRAY_SIZE(skipPlant) ==
                 CONST_ARRAY_SIZE(moistureTarget));
   static_assert(CONST_ARRAY_SIZE(moistSensMin) == (MAX_MOISTURE_SENSOR_COUNT));
@@ -38,7 +47,10 @@ void defaultInitSettings(Settings &settings) {
   for (uint8_t i = 0; i < (MAX_MOISTURE_SENSOR_COUNT); ++i) {
     settings.sensConfs[i].minValue = moistSensMin[i];
     settings.sensConfs[i].maxValue = moistSensMax[i];
-    settings.targetMoistures[i] = moistureTarget[i];
+    settings.targetMoisture[i] = moistureTarget[i];
+    settings.burstDuration[i] = burstDuration[i];
+    settings.burstDelay[i] = burstDelay[i];
+    settings.maxBursts[i] = maxBursts[i];
     settings.ticksBetweenIrrigation[i] = 0;
   }
   for (uint8_t i = 0; i < 2; ++i) {

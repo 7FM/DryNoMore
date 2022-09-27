@@ -48,7 +48,9 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
 
   const auto moistMin = settings.sensConfs[idx].minValue;
   const auto moistMax = settings.sensConfs[idx].maxValue;
-  const auto moistTarget = settings.targetMoistures[idx];
+  const auto moistTarget = settings.targetMoisture[idx];
+  const auto burstDelay = settings.burstDelay[idx];
+  const auto maxBursts = settings.maxBursts[idx];
 
   const uint8_t waterSensIdx = (settings.moistSensToWaterSensBitmap[idx / 8] >>
                                 (idx & 7 /*aka mod 8*/)) &
@@ -65,21 +67,20 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
 
   shiftReg.update(moistSensMask | waterSensMask);
   _delay_ms(POWER_ON_DELAY_MS);
-  bool isPumpActive = false;
 
   // timeout to ensure we are not stuck here forever (and flood the plants) in
   // case of an defect sensor/pump
   constexpr long measurementDuration =
       (static_cast<long>(ADC_MEASUREMENTS) * (MEASURE_DELAY_MS));
-  constexpr uint8_t timeoutCycles =
-      (static_cast<long>(IRRIGATION_TIMEOUT_SEC) * 1000 + measurementDuration) /
+  const uint8_t burstCycles =
+      (static_cast<long>(settings.burstDuration[idx]) * 1000 +
+       measurementDuration - 1) /
       measurementDuration;
 
   uint16_t rawWaterMeasurement = UNDEFINED_LEVEL_16;
   uint16_t rawMoistMeasurement = UNDEFINED_LEVEL_16;
   uint8_t waterMeasurement = UNDEFINED_LEVEL_8;
   uint8_t moistMeasurement = UNDEFINED_LEVEL_8;
-  bool hasWaterLeft = true;
 
   auto initCheck = [&]() {
     if (status.beforeWaterLevels[waterSensIdx] == UNDEFINED_LEVEL_8) {
@@ -96,32 +97,41 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
     }
   };
 
-  for (uint8_t cycle = 0;
-       (hasWaterLeft =
-            waterTankNotEmpty(waterPin, waterMin, waterMax, waterEmpty,
-                              waterMeasurement, rawWaterMeasurement)) &&
-       isSoilTooDry(moistPin, moistMin, moistMax, moistTarget, moistMeasurement,
-                    rawMoistMeasurement);
-       ++cycle) {
-    if (cycle == 0) {
-      initCheck();
-    } else if (cycle == timeoutCycles) {
-      settings.hardwareFailure = true;
-      shiftReg.disableOutput();
-      break;
+  bool soilIsTooDry = false;
+  bool hasWaterLeft = true;
+  for (uint8_t burst = 0; burst < maxBursts; ++burst) {
+    for (uint8_t burstCycle = 0; burstCycle < burstCycles; ++burstCycle) {
+      soilIsTooDry = isSoilTooDry(moistPin, moistMin, moistMax, moistTarget,
+                                  moistMeasurement, rawMoistMeasurement);
+      hasWaterLeft = waterTankNotEmpty(waterPin, waterMin, waterMax, waterEmpty,
+                                       waterMeasurement, rawWaterMeasurement);
+
+      if (!(soilIsTooDry && hasWaterLeft)) {
+        goto stop_irrigation;
+      }
+
+      if (burstCycle == 0) {
+        shiftReg.update(moistSensMask | waterSensMask | pumpMask);
+        if (burst == 0) {
+          initCheck();
+        }
+      }
     }
-    if (!isPumpActive) {
-      // turn on the pump
-      isPumpActive = true;
-      shiftReg.update(moistSensMask | waterSensMask | pumpMask);
+
+    // Turn off the pump and wait approx. X seconds
+    shiftReg.update(moistSensMask | waterSensMask);
+    for (uint8_t i = 0; i < burstDelay; ++i) {
+      _delay_ms(1000);
     }
   }
 
+stop_irrigation:
   // Finally turn the power of the sensors and the pump off
   shiftReg.disableOutput();
   shiftReg.update(0);
   shiftReg.enableOutput();
 
+  settings.hardwareFailure = soilIsTooDry && hasWaterLeft;
   initCheck();
   status.afterWaterLevelsRaw[waterSensIdx] = rawWaterMeasurement;
   status.afterWaterLevels[waterSensIdx] = waterMeasurement;
@@ -284,7 +294,7 @@ void loop() {
 
     const auto moistMin = settings.sensConfs[idx].minValue;
     const auto moistMax = settings.sensConfs[idx].maxValue;
-    const auto moistTarget = settings.targetMoistures[idx];
+    const auto moistTarget = settings.targetMoisture[idx];
 
     shiftReg.update(moistSensMask);
     shiftReg.enableOutput();
@@ -385,7 +395,8 @@ void loop() {
 
       if (statusChanged) {
         // TODO only the first message gets received... debug on a networking
-        // level! For now always send the status as it implicitly contains the water warnings!
+        // level! For now always send the status as it implicitly contains the
+        // water warnings!
         sendStatus(status);
         for (uint8_t i = 0; resCode != 0 && i < 2; ++i, resCode >>= 2) {
           if (resCode & 0x02) {

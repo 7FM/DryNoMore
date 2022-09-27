@@ -44,7 +44,6 @@
 #define MEASURE_DELAY_MS 200
 #define POWER_ON_DELAY_MS 500
 #define ADC_MEASUREMENTS 5
-#define IRRIGATION_TIMEOUT_SEC 20
 
 // time between moisture checks: default every 6 hours
 #define SLEEP_PERIOD_MIN static_cast<uint16_t>(6) * 60
@@ -123,6 +122,12 @@
   { 0, 0, 0, 0, 0, 0 }
 #define DEFAULT_PLANT_SKIP_VALUES                                              \
   { 1, 1, 1, 1, 1, 1 }
+#define DEFAULT_BURST_DURATION_SEC                                             \
+  { 2, 2, 2, 2, 2, 2 }
+#define DEFAULT_BURST_DELAY_SEC                                                \
+  { 5, 5, 5, 5, 5, 5 }
+#define DEFAULT_MAX_BURSTS                                                     \
+  { 5, 5, 5, 5, 5, 5 }
 
 #define DEFAULT_WATER_MIN_VALUES                                               \
   { 180, 180 }

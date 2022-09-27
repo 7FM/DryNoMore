@@ -88,7 +88,8 @@ updateValue(int16_t valueUpdate,
   } else if (editValueInfo->value16 != nullptr) {
     value = get16BitValue(editValueInfo->value16);
   } else {
-    std::cerr << "CRITICAL ERROR: " __FILE__ " misused updateValue()" << std::endl;
+    std::cerr << "CRITICAL ERROR: " __FILE__ " misused updateValue()"
+              << std::endl;
     return;
   }
 
@@ -328,7 +329,7 @@ KeyboardManager::KeyboardManager(Settings &settings,
           // init plant settings with sane values
           settings.sensConfs[settings.numPlants - 1].minValue = 0;
           settings.sensConfs[settings.numPlants - 1].maxValue = 0;
-          settings.targetMoistures[settings.numPlants - 1] = 0;
+          settings.targetMoisture[settings.numPlants - 1] = 0;
           // Skip by default
           settings.skipBitmap[(settings.numPlants - 1) / 8] |=
               (static_cast<uint8_t>(1)
@@ -487,7 +488,7 @@ KeyboardManager::KeyboardManager(Settings &settings,
           editValueInfo->maxVal = 99;
           editValueInfo->value16 = nullptr;
           editValueInfo->value8 =
-              &(settings.targetMoistures[editValueInfo->idx]);
+              &(settings.targetMoisture[editValueInfo->idx]);
         } else {
           // TODO wtf
         }
@@ -532,8 +533,55 @@ KeyboardManager::KeyboardManager(Settings &settings,
         currentKb->callback(api, settings, query, currentKb);
       });
 
+  auto editBurstDuration = std::make_shared<Button>(
+      "Edit burst duration", "edit_burst_duration",
+      [editValueInfo](const TgBot::Api &, Settings &settings,
+                      TgBot::CallbackQuery::Ptr, Keyboard *) {
+        if (!editValueInfo->isWaterLvl) {
+          editValueInfo->minVal = 0;
+          editValueInfo->maxVal = 255;
+          editValueInfo->value16 = nullptr;
+          editValueInfo->value8 = &(settings.burstDuration[editValueInfo->idx]);
+        } else {
+          // TODO wtf
+        }
+      },
+      editValue);
+
+  auto editBurstDelay = std::make_shared<Button>(
+      "Edit burst delay", "edit_burst_delay",
+      [editValueInfo](const TgBot::Api &, Settings &settings,
+                      TgBot::CallbackQuery::Ptr, Keyboard *) {
+        if (!editValueInfo->isWaterLvl) {
+          editValueInfo->minVal = 0;
+          editValueInfo->maxVal = 255;
+          editValueInfo->value16 = nullptr;
+          editValueInfo->value8 = &(settings.burstDelay[editValueInfo->idx]);
+        } else {
+          // TODO wtf
+        }
+      },
+      editValue);
+
+  auto editMaxBursts = std::make_shared<Button>(
+      "Edit max bursts", "edit_max_bursts",
+      [editValueInfo](const TgBot::Api &, Settings &settings,
+                      TgBot::CallbackQuery::Ptr, Keyboard *) {
+        if (!editValueInfo->isWaterLvl) {
+          editValueInfo->minVal = 0;
+          editValueInfo->maxVal = 255;
+          editValueInfo->value16 = nullptr;
+          editValueInfo->value8 = &(settings.maxBursts[editValueInfo->idx]);
+        } else {
+          // TODO wtf
+        }
+      },
+      editValue);
+
   Keyboard::addRow(editMoistDetailLayer, {editTargetMoistBut});
   Keyboard::addRow(editMoistDetailLayer, {editTicksBwIrrigation});
+  Keyboard::addRow(editMoistDetailLayer, {editBurstDuration, editMaxBursts});
+  Keyboard::addRow(editMoistDetailLayer, {editBurstDelay});
   Keyboard::addRow(editMoistDetailLayer,
                    {toggleWaterSensMappingBut, toggleSkipBut});
   Keyboard::addRow(editMoistDetailLayer, {editMinValBut, editMaxValBut});

@@ -143,9 +143,8 @@ std::string generateMoistSettingsTable(const Settings &settings) {
                                            false, true, true};
   std::vector<bool> printRightWhitespace = {false, true, true, false,
                                             false, true, true};
-  std::vector<std::string> row{
-      "ID",       "Min\nVal", "Max\nVal",      "Moist\nGoal",
-      "Wat\nSen", "Skp",      "Tick\nb/w\nWat"};
+  std::vector<std::string> row{"ID",          "Min\nVal", "Max\nVal",
+                               "Moist\nGoal", "Wat\nSen", "Skp"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < settings.numPlants; ++i) {
@@ -156,15 +155,31 @@ std::string generateMoistSettingsTable(const Settings &settings) {
     row = {"P" + std::to_string(i + 1),
            std::to_string(settings.sensConfs[i].minValue),
            std::to_string(settings.sensConfs[i].maxValue),
-           std::to_string(settings.targetMoistures[i]) + " %",
+           std::to_string(settings.targetMoisture[i]) + " %",
            sensorIdx ? "W2" : "W1",
-           skip ? "yes" : "no",
+           skip ? "yes" : "no"};
+    table.push_back(std::move(row));
+  }
+
+  std::string moistureSensorSettings(
+      generateTable(table, printLeftWhitespace, printRightWhitespace));
+  table.clear();
+
+  row = {"ID", "Burst\nDuration", "Burst\nDelay", "Max\nBursts",
+         "Tick\nb/w\nWat"};
+  table.push_back(std::move(row));
+
+  for (int i = 0; i < settings.numPlants; ++i) {
+    row = {"P" + std::to_string(i + 1),
+           std::to_string(settings.burstDuration[i]),
+           std::to_string(settings.burstDelay[i]),
+           std::to_string(settings.maxBursts[i]),
            std::to_string(settings.ticksBetweenIrrigation[i])};
     table.push_back(std::move(row));
   }
 
-  return "Moisture Sensor Settings:\n" +
-         generateTable(table, printLeftWhitespace, printRightWhitespace);
+  return "Moisture Sensor Settings:\n" + moistureSensorSettings +
+         "Irrigation Settings:\n" + generateTable(table);
 }
 
 std::string generateSettingsTable(const Settings &settings) {
