@@ -1,5 +1,9 @@
 #pragma once
 
+// #define BOARD_VERSION 0x0010 /*v0.1*/
+// #define BOARD_VERSION 0x0020 /*v0.2*/
+#define BOARD_VERSION 0x0030 /*v0.3*/
+
 // Configure modes
 // #define DUMP_SOIL_MOISTURES_MEASUREMENTS
 #ifndef DUMP_SOIL_MOISTURES_MEASUREMENTS
@@ -94,11 +98,18 @@
         (static_cast<uint16_t>(1) << 0) /* Sens 2 */                           \
   }
 
+#if BOARD_VERSION >= 0x0030
+#define ETH_PWR_MAPPING (static_cast<uint16_t>(1) << 8) /* Unused 2 */
+#define UNUSED_PWR_MAPPING                                                     \
+  { (static_cast<uint16_t>(1) << 15) /* Unused 1 */ }
+
+#else
 #define UNUSED_PWR_MAPPING                                                     \
   {                                                                            \
     (static_cast<uint16_t>(1) << 15),   /* Unused 1 */                         \
         (static_cast<uint16_t>(1) << 8) /* Unused 2 */                         \
   }
+#endif
 
 #define DEFAULT_NUM_PLANTS 1
 

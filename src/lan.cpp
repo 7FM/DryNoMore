@@ -48,13 +48,30 @@ Bit: Symbol: Description:
 #define W5500_OPM_POWER_DOWN ((0b110) << 3)
 #define W5500_OPM_ALL ((0b111) << 3)
 
-void setupEthernet() {
+void setupEthernet(
+#ifdef ETH_PWR_MAPPING
+    const ShiftReg &shiftReg
+#endif
+) {
   Ethernet.init();
-  W5100.init();
+#ifdef ETH_PWR_MAPPING
+  powerDownEthernet(shiftReg);
+#else
   powerDownEthernet();
+#endif
 }
 
-void powerUpEthernet() {
+void powerUpEthernet(
+#ifdef ETH_PWR_MAPPING
+    const ShiftReg &shiftReg
+#endif
+) {
+
+#ifdef ETH_PWR_MAPPING
+  shiftReg.update(ETH_PWR_MAPPING);
+  shiftReg.enableOutput();
+#endif
+
   // Select 10 MBit half-duplex
   W5100.writePHYCFGR_W5500(W5500_RST_LOW | W5500_OPMD | W5500_OPM_10_HALF);
   // perform reset to ensure that the settings are applied
@@ -73,6 +90,7 @@ void powerUpEthernet() {
       SERIALprintlnP(PSTR("Ethernet cable is not connected."));
     }
     // try to configure using IP address instead of DHCP:
+    Ethernet.end();
     Ethernet.begin(mac, fallbackIP, fallbackDns);
   } else {
     SERIALprintP(PSTR("  DHCP assigned IP "));
@@ -82,7 +100,11 @@ void powerUpEthernet() {
   client.connect(serverIP, LOCAL_SERVER_PORT);
 }
 
-void powerDownEthernet() {
+void powerDownEthernet(
+#ifdef ETH_PWR_MAPPING
+    const ShiftReg &shiftReg
+#endif
+) {
   if (client.connected()) {
     client.stop();
   }
@@ -91,6 +113,14 @@ void powerDownEthernet() {
   W5100.writePHYCFGR_W5500(W5500_RST_LOW | W5500_OPMD | W5500_OPM_POWER_DOWN);
   // TODO stay in reset mode?
   W5100.writePHYCFGR_W5500(W5500_OPMD | W5500_OPM_POWER_DOWN);
+
+  Ethernet.end();
+
+#ifdef ETH_PWR_MAPPING
+  shiftReg.disableOutput();
+  shiftReg.update(0);
+  shiftReg.enableOutput();
+#endif
 }
 
 void sendStatus(const Status &status) {

@@ -1,7 +1,7 @@
 #include "power_ctrl.hpp"
 #include "config.hpp"
 
-void ShiftReg::init() {
+void ShiftReg::init() const {
   pinMode(SHIFT_REG_OUTPUT_EN_PIN, OUTPUT);
   disableOutput();
 
@@ -14,9 +14,9 @@ void ShiftReg::init() {
   pinMode(SHIFT_REG_DATA_PIN, OUTPUT);
   digitalWrite(SHIFT_REG_DATA_PIN, LOW);
 }
-void ShiftReg::enableOutput() { digitalWrite(SHIFT_REG_OUTPUT_EN_PIN, LOW); }
-void ShiftReg::disableOutput() { digitalWrite(SHIFT_REG_OUTPUT_EN_PIN, HIGH); }
-void ShiftReg::update(uint16_t newValue) {
+void ShiftReg::enableOutput() const { digitalWrite(SHIFT_REG_OUTPUT_EN_PIN, LOW); }
+void ShiftReg::disableOutput() const { digitalWrite(SHIFT_REG_OUTPUT_EN_PIN, HIGH); }
+void ShiftReg::update(uint16_t newValue) const {
   // check my assumptions
   static_assert(LOW == 0x00);
   static_assert(HIGH == 0x01);

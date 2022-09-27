@@ -8,10 +8,10 @@ struct ShiftReg {
     update(0);
   }
 
-  void enableOutput();
-  void disableOutput();
-  void update(uint16_t newVal);
+  void enableOutput() const;
+  void disableOutput() const;
+  void update(uint16_t newVal) const;
 
 private:
-  void init();
+  void init() const;
 };

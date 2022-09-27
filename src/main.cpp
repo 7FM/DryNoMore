@@ -20,7 +20,7 @@ static constexpr uint16_t waterSensPwrMap[] = WATER_SENS_PWR_MAPPING;
 static constexpr uint16_t pumpPwrMap[] = PUMP_PWR_MAPPING;
 
 // Global vars
-static ShiftReg shiftReg;
+static const ShiftReg shiftReg;
 static Settings settings;
 static Status status;
 
@@ -248,7 +248,7 @@ void setup() {
 
   // TODO we will probably need this in hardware revision v0.3 in every
   // iteration -> adjust library to our need!
-  setupEthernet();
+  setupEthernet(shiftReg);
 
   SERIALbegin(SERIAL_BAUD_RATE);
   defaultInitSettings(settings);
@@ -333,10 +333,10 @@ void loop() {
   // caps
   initAnalogPins();
   // allow remote to reset the hardware failure flag
-  powerUpEthernet();
+  powerUpEthernet(shiftReg);
   updateSettings(settings);
   deinitUnusedAnalogPins();
-  powerDownEthernet();
+  powerDownEthernet(shiftReg);
   if (!settings.hardwareFailure) {
     bool statusChanged = false;
     setStatusUndef(status);
@@ -376,7 +376,7 @@ void loop() {
 
     // Only send messages if the status changed!
     if (statusChanged || settings.hardwareFailure) {
-      powerUpEthernet();
+      powerUpEthernet(shiftReg);
 
       if (settings.hardwareFailure) {
         // Send HW error message!
@@ -396,7 +396,7 @@ void loop() {
         }
       }
 
-      powerDownEthernet();
+      powerDownEthernet(shiftReg);
     }
   } else {
     analogPowerSave();
