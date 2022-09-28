@@ -12,7 +12,7 @@
 static std::atomic<bool> running(true);
 
 static void signalHandler(int signal) {
-  if (signal == SIGINT) {
+  if (signal == SIGINT || signal == SIGTERM) {
     running.store(false);
   }
 }
@@ -212,6 +212,7 @@ static void writeSettings(const StateWrapper &state, YAML::Node &config) {
 int main(int argc, char **argv) {
   // Register interrupt signal handler to stop the program
   signal(SIGINT, signalHandler);
+  signal(SIGTERM, signalHandler);
 
   if (argc != 2) {
     std::cout << "Usage: ./telegram_bot <config.yaml>" << std::endl;
