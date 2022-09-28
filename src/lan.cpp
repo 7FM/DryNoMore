@@ -48,6 +48,12 @@ Bit: Symbol: Description:
 #define W5500_OPM_POWER_DOWN ((0b110) << 3)
 #define W5500_OPM_ALL ((0b111) << 3)
 
+#ifndef ETH_PWR_MAPPING
+void powerUpEthernet();
+void powerDownEthernet();
+void setupEthernet();
+#endif
+
 void setupEthernet(
 #ifdef ETH_PWR_MAPPING
     const ShiftReg &shiftReg
@@ -122,6 +128,12 @@ void powerDownEthernet(
   shiftReg.enableOutput();
 #endif
 }
+
+#ifndef ETH_PWR_MAPPING
+void powerUpEthernet(const ShiftReg &shiftReg) { powerUpEthernet(); }
+void powerDownEthernet(const ShiftReg &shiftReg) { powerDownEthernet(); }
+void setupEthernet(const ShiftReg &shiftReg) { setupEthernet(); }
+#endif
 
 void sendStatus(const Status &status) {
   uint8_t buf[sizeof(status) + 1];
