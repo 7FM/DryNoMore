@@ -77,6 +77,7 @@ void powerUpEthernet(
   shiftReg.update(ETH_PWR_MAPPING);
   shiftReg.enableOutput();
 #endif
+  W5100.init();
 
   // Select 10 MBit half-duplex
   W5100.writePHYCFGR_W5500(W5500_RST_LOW | W5500_OPMD | W5500_OPM_10_HALF);
