@@ -4,6 +4,8 @@
 
 #define MAX_MOISTURE_SENSOR_COUNT 6
 
+#define SETTINGS_VERSION_NUM 0x0010
+
 PACKED_STRUCT_DEF(SensConfig, uint16_t minValue; uint16_t maxValue;);
 PACKED_STRUCT_DEF(WaterLvlThresholds, uint8_t warnThres; uint8_t emptyThres;);
 
