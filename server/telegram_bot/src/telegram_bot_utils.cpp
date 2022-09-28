@@ -139,10 +139,10 @@ std::string generateMoistSettingsTable(const Settings &settings) {
   std::vector<std::vector<std::string>> table;
   table.reserve(1 + settings.numPlants);
 
-  std::vector<bool> printLeftWhitespace = {false, true, true, true,
-                                           false, true, true};
-  std::vector<bool> printRightWhitespace = {false, true, true, false,
-                                            false, true, true};
+  std::vector<bool> printLeftWhitespace = {false, true,  true,
+                                           true,  false, true};
+  std::vector<bool> printRightWhitespace = {false, true,  true,
+                                            false, false, true};
   std::vector<std::string> row{"ID",          "Min\nVal", "Max\nVal",
                                "Moist\nGoal", "Wat\nSen", "Skp"};
   table.push_back(std::move(row));
@@ -165,7 +165,9 @@ std::string generateMoistSettingsTable(const Settings &settings) {
       generateTable(table, printLeftWhitespace, printRightWhitespace));
   table.clear();
 
-  row = {"ID", "Burst\nDuration", "Burst\nDelay", "Max\nBursts",
+  printLeftWhitespace = {false, true, true, true, true};
+  printRightWhitespace = {false, false, false, false, false};
+  row = {"ID", "Burst\nLen", "Burst\nDelay", "Max #\nBursts",
          "Tick\nb/w\nWat"};
   table.push_back(std::move(row));
 
@@ -179,7 +181,8 @@ std::string generateMoistSettingsTable(const Settings &settings) {
   }
 
   return "Moisture Sensor Settings:\n" + moistureSensorSettings +
-         "Irrigation Settings:\n" + generateTable(table);
+         "Irrigation Settings:\n" +
+         generateTable(table, printLeftWhitespace, printRightWhitespace);
 }
 
 std::string generateSettingsTable(const Settings &settings) {
