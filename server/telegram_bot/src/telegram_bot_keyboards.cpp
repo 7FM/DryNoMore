@@ -534,7 +534,7 @@ KeyboardManager::KeyboardManager(Settings &settings,
       });
 
   auto editBurstDuration = std::make_shared<Button>(
-      "Edit burst duration", "edit_burst_duration",
+      "Edit burst length", "edit_burst_length",
       [editValueInfo](const TgBot::Api &, Settings &settings,
                       TgBot::CallbackQuery::Ptr, Keyboard *) {
         if (!editValueInfo->isWaterLvl) {
@@ -564,7 +564,7 @@ KeyboardManager::KeyboardManager(Settings &settings,
       editValue);
 
   auto editMaxBursts = std::make_shared<Button>(
-      "Edit max bursts", "edit_max_bursts",
+      "Edit max # bursts", "edit_max_bursts",
       [editValueInfo](const TgBot::Api &, Settings &settings,
                       TgBot::CallbackQuery::Ptr, Keyboard *) {
         if (!editValueInfo->isWaterLvl) {
