@@ -60,6 +60,7 @@ void setupEthernet(
 #endif
 ) {
   Ethernet.init();
+  W5100.init();
 #ifdef ETH_PWR_MAPPING
   powerDownEthernet(shiftReg);
 #else
