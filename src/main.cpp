@@ -118,10 +118,12 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
       }
     }
 
-    // Turn off the pump and wait approx. X seconds
-    shiftReg.update(moistSensMask | waterSensMask);
-    for (uint8_t i = 0; i < burstDelay; ++i) {
-      _delay_ms(1000);
+    if (burstDelay > 0) {
+      // Turn off the pump and wait approx. X seconds
+      shiftReg.update(moistSensMask | waterSensMask);
+      for (uint8_t i = 0; i < burstDelay; ++i) {
+        _delay_ms(1000);
+      }
     }
   }
 
