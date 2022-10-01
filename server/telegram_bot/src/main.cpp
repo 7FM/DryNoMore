@@ -166,8 +166,7 @@ namespace YAML {
             maxBurstsNode[i].as<yaml_dec_type_t<decltype(set.maxBursts[i])>>();
         set.ticksBetweenIrrigation[i] =
             ticksBetweenIrrigationNode[i]
-                .as<std::remove_cvref_t<
-                    decltype(set.ticksBetweenIrrigation[i])>>();
+                .as<yaml_dec_type_t<decltype(set.ticksBetweenIrrigation[i])>>();
 
         // handle bitmaps
         bool val = moistSensToWaterSensBitmapNode[i]
