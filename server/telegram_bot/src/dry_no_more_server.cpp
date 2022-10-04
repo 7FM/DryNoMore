@@ -115,17 +115,22 @@ void runDryNoMoreStatusServer(int fd, StateWrapper &state,
         printErrno();
       }
     } else {
-      int res =
-          read(client_fd, reinterpret_cast<void *>(buf.get()), BUF_SIZE - 1);
-      if (res <= 0) {
-        std::cerr << "DryNoMore status server: failed to receive request from "
-                     "client: ";
-        printErrno();
-      } else {
-        buf[res] = '\0';
-      }
+      for (int res = 0;
+           (res = read(client_fd, reinterpret_cast<void *>(buf.get()),
+                       BUF_SIZE - 1));) {
 
-      processDryNoMoreRequest(buf, state, msgQueue, client_fd, res, BUF_SIZE);
+        if (res < 0) {
+          std::cerr
+              << "DryNoMore status server: failed to receive request from "
+                 "client: ";
+          printErrno();
+          break;
+        } else {
+          buf[res] = '\0';
+        }
+
+        processDryNoMoreRequest(buf, state, msgQueue, client_fd, res, BUF_SIZE);
+      }
 
       // Close the connection and release the file descriptor again!
       close(client_fd);
