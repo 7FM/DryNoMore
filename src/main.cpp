@@ -388,9 +388,6 @@ void loop() {
     if (statusChanged || settings.hardwareFailure) {
       powerUpEthernet(shiftReg);
       if (statusChanged) {
-        // TODO only the first message gets received... debug on a networking
-        // level! For now always send the status as it implicitly contains the
-        // water warnings!
         sendStatus(status);
         for (uint8_t i = 0; resCode != 0 && i < 2; ++i, resCode >>= 2) {
           if (resCode & 0x02) {
