@@ -258,8 +258,6 @@ void setup() {
 
   powerSavingSettings();
 
-  // TODO we will probably need this in hardware revision v0.3 in every
-  // iteration -> adjust library to our need!
   setupEthernet(shiftReg);
 
   SERIALbegin(SERIAL_BAUD_RATE);
@@ -389,12 +387,6 @@ void loop() {
     // Only send messages if the status changed!
     if (statusChanged || settings.hardwareFailure) {
       powerUpEthernet(shiftReg);
-
-      if (settings.hardwareFailure) {
-        // Send HW error message!
-        sendErrorHardware(idx - 1);
-      }
-
       if (statusChanged) {
         // TODO only the first message gets received... debug on a networking
         // level! For now always send the status as it implicitly contains the
@@ -407,6 +399,10 @@ void loop() {
             sendWarning(i);
           }
         }
+      }
+      if (settings.hardwareFailure) {
+        // Send HW error message!
+        sendErrorHardware(idx - 1);
       }
 
       powerDownEthernet(shiftReg);
