@@ -59,6 +59,10 @@ void setupEthernet(
     const ShiftReg &shiftReg
 #endif
 ) {
+#ifdef ETH_PWR_MAPPING
+  shiftReg.update(ETH_PWR_MAPPING);
+  shiftReg.enableOutput();
+#endif
   Ethernet.init();
   W5100.init();
 #ifdef ETH_PWR_MAPPING
