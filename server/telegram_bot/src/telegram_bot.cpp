@@ -90,6 +90,23 @@ void runDryNoMoreTelegramBot(const std::string &token,
 
   TgBot::TgLongPoll longPoll(bot);
   while (running.load(std::memory_order_relaxed)) {
+    // check if the status was not yet published & send update
+    {
+      std::unique_lock lock(state.statusWrap.mut);
+
+      if (state.statusWrap.unpublished) {
+        state.statusWrap.unpublished = false;
+        Status statusCopy;
+        std::memcpy(&statusCopy, &state.statusWrap.status, sizeof(statusCopy));
+        lock.unlock();
+
+        std::string statusUpdate = generateStatusTable(statusCopy);
+        for (std::int64_t chat : broadcastChats) {
+          api.sendMessage(chat, statusUpdate, false, 0,
+                          std::make_shared<TgBot::GenericReply>(), "Markdown");
+        }
+      }
+    }
 
     // send all messages in the message queue
     while (running.load(std::memory_order_relaxed) && !msgQueue.empty()) {
@@ -121,24 +138,6 @@ void runDryNoMoreTelegramBot(const std::string &token,
 
         for (std::int64_t chat : broadcastChats) {
           api.sendMessage(chat, message, false, 0,
-                          std::make_shared<TgBot::GenericReply>(), "Markdown");
-        }
-      }
-    }
-
-    // check if the status was not yet published & send update
-    {
-      std::unique_lock lock(state.statusWrap.mut);
-
-      if (state.statusWrap.unpublished) {
-        state.statusWrap.unpublished = false;
-        Status statusCopy;
-        std::memcpy(&statusCopy, &state.statusWrap.status, sizeof(statusCopy));
-        lock.unlock();
-
-        std::string statusUpdate = generateStatusTable(statusCopy);
-        for (std::int64_t chat : broadcastChats) {
-          api.sendMessage(chat, statusUpdate, false, 0,
                           std::make_shared<TgBot::GenericReply>(), "Markdown");
         }
       }
