@@ -257,13 +257,6 @@ void setup() {
   static_assert((MAX_MOISTURE_SENSOR_COUNT) == CONST_ARRAY_SIZE(pumpPwrMap));
 
   powerSavingSettings();
-
-  setupEthernet(shiftReg);
-
-  SERIALbegin(SERIAL_BAUD_RATE);
-  defaultInitSettings(settings);
-  defaultInitStatus(status);
-
   analogPowerSave();
 
   // Heavily discussed in
@@ -274,10 +267,19 @@ void setup() {
   // on! so lets settle with INPUT_PULLUP and hope that the leakage current is
   // much lower than powering the LEDs!
   for (auto p : unusedDigitalPins) {
-    // pinMode(p, OUTPUT);
-    // digitalWrite(p, LOW);
-    pinMode(p, INPUT_PULLUP);
+    if (p == /*D*/ 0 || p == /*D*/ 1) {
+      pinMode(p, INPUT_PULLUP);
+    } else {
+      pinMode(p, OUTPUT);
+      digitalWrite(p, LOW);
+    }
   }
+
+  setupEthernet(shiftReg);
+
+  SERIALbegin(SERIAL_BAUD_RATE);
+  defaultInitSettings(settings);
+  defaultInitStatus(status);
 }
 
 void loop() {
