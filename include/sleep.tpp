@@ -59,9 +59,6 @@ void longSleep() {
   constexpr decltype(watchdogTicks) neededSleepTicks =
       static_cast<uint16_t>(sleepTicksLargeVar);
 
-  // Turn off SCK LED!
-  digitalWrite(/*D*/13, LOW);
-
   // disable ADC by clearing the enable bit
   ADCSRA &= ~_BV(ADEN);
   // disable the analog comparator interrupts
