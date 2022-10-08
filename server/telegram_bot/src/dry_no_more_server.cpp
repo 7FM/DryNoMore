@@ -42,7 +42,7 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
                     sizeof(state.statusWrap.status));
       } else {
         std::cerr << "Unexpected Status packet size of " << readSize
-                  << " instead of" << (sizeof(Status) + 1) << std::endl;
+                  << " instead of " << (sizeof(Status) + 1) << std::endl;
       }
 
       break;
@@ -91,7 +91,7 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
                       sizeof(state.settingsWrap.settings));
         } else {
           std::cerr << "Unexpected Settings packet size of " << readSize
-                    << " instead of" << (sizeof(Settings)) << std::endl;
+                    << " instead of " << (sizeof(Settings)) << std::endl;
         }
       }
       break;

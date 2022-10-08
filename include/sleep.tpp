@@ -31,8 +31,6 @@ namespace {
     // Then, to set the BODS bit, BODS must be set to one and BODSE must be set
     // to zero within four clock cycles.
     MCUCR = (MCUCR & (~_BV(BODSE))) | _BV(BODS);
-    // TODO count cycles of the produces assembler code or write directly in
-    // assembly!
 
     // The BODS bit is active three clock cycles after it is set.
     // A sleep instruction must be executed while BODS is active in order to
@@ -53,7 +51,7 @@ void longSleep() {
       (static_cast<uint64_t>(duration_in_min) * 60 +
        static_cast<uint64_t>(WATCHDOG_DURATION_SEC) - 1) /
       static_cast<uint64_t>(WATCHDOG_DURATION_SEC);
-  static_assert(sleepTicksLargeVar != 0, "A sleep duration of 0 is invalid!");
+  static_assert(sleepTicksLargeVar != 0, "A sleep duration of 0 ticks is invalid!");
   static_assert(sleepTicksLargeVar < 65536ULL,
                 "To long sleep duration specified!");
   constexpr decltype(watchdogTicks) neededSleepTicks =
