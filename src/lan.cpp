@@ -77,6 +77,7 @@ void powerUpEthernet(
     const ShiftReg &shiftReg
 #endif
 ) {
+  SERIALprintlnP(PSTR("Powering up Ethernet."));
 
 #ifdef ETH_PWR_MAPPING
   shiftReg.update(ETH_PWR_MAPPING);
@@ -89,6 +90,8 @@ void powerUpEthernet(
   // perform reset to ensure that the settings are applied
   W5100.writePHYCFGR_W5500(W5500_OPMD | W5500_OPM_10_HALF);
   W5100.writePHYCFGR_W5500(W5500_RST_LOW | W5500_OPMD | W5500_OPM_10_HALF);
+
+  SERIALprintlnP(PSTR("Trying to get an IP Address."));
 
   if (Ethernet.begin(mac, 10 /* tries */) == 0) {
     SERIALprintlnP(PSTR("Failed to configure Ethernet using DHCP"));
@@ -109,6 +112,7 @@ void powerUpEthernet(
     SERIALprintln(Ethernet.localIP());
   }
 
+  SERIALprintlnP(PSTR("Connecting to local server."));
   client.connect(serverIP, LOCAL_SERVER_PORT);
 }
 
@@ -117,6 +121,9 @@ void powerDownEthernet(
     const ShiftReg &shiftReg
 #endif
 ) {
+
+  SERIALprintlnP(PSTR("Powering down Ethernet."));
+
   if (client.connected()) {
     client.stop();
   }

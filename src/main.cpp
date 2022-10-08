@@ -275,9 +275,11 @@ void setup() {
     }
   }
 
-  setupEthernet(shiftReg);
-
   SERIALbegin(SERIAL_BAUD_RATE);
+  SERIALprintlnP(PSTR("Setup Ethernet"));
+  setupEthernet(shiftReg);
+  SERIALprintlnP(PSTR("Done: Setup Ethernet"));
+
   defaultInitSettings(settings);
   defaultInitStatus(status);
 }
@@ -341,6 +343,8 @@ void loop() {
   // Production mode
   // ===================================================================
 
+  SERIALprintlnP(PSTR("Running irrigation routine!"));
+
   // Switch to normal input mode early to ensure enough time to discharge all
   // caps
   initAnalogPins();
@@ -362,6 +366,7 @@ void loop() {
     shiftReg.update(0);
     shiftReg.enableOutput();
 
+    SERIALprintlnP(PSTR("Irrigation running!"));
     uint8_t idx = 0;
     for (; !settings.hardwareFailure && idx < settings.numPlants; ++idx) {
       bool skip = status.ticksSinceIrrigation[idx] <
@@ -388,6 +393,7 @@ void loop() {
 
     // Only send messages if the status changed!
     if (statusChanged || settings.hardwareFailure) {
+      SERIALprintlnP(PSTR("Send status updates!"));
       powerUpEthernet(shiftReg);
       if (statusChanged) {
         sendStatus(status);
@@ -414,6 +420,7 @@ void loop() {
       t = max(t, t + 1);
     }
   }
+  SERIALprintlnP(PSTR("Entering long sleep!"));
   longSleep<SLEEP_PERIOD_MIN>();
 #endif
 }
