@@ -98,7 +98,7 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
   };
 
   bool soilIsTooDry = false;
-  bool hasWaterLeft = true;
+  bool hasWaterLeft = false;
   for (uint8_t burst = 0; burst < maxBursts; ++burst) {
     for (uint8_t burstCycle = 0; burstCycle < burstCycles; ++burstCycle) {
       soilIsTooDry = isSoilTooDry(moistPin, moistMin, moistMax, moistTarget,
@@ -106,7 +106,7 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
       hasWaterLeft = waterTankNotEmpty(waterPin, waterMin, waterMax, waterEmpty,
                                        waterMeasurement, rawWaterMeasurement);
 
-      if (!(soilIsTooDry && hasWaterLeft)) {
+      if (!soilIsTooDry || !hasWaterLeft) {
         goto stop_irrigation;
       }
 
