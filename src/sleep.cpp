@@ -1,5 +1,4 @@
-#pragma once
-
+#include "sleep.hpp"
 #include "lan.hpp"
 #include "serial.hpp"
 #include "watchdog_abuse.hpp"
@@ -43,19 +42,12 @@ namespace {
   }
 } // namespace
 
-template <uint16_t duration_in_min>
-void longSleep() {
+void sleepSec(uint16_t duration_in_sec) {
   uint16_t watchdogTicks = 0;
-
-  constexpr uint64_t sleepTicksLargeVar =
-      (static_cast<uint64_t>(duration_in_min) * 60 +
-       static_cast<uint64_t>(WATCHDOG_DURATION_SEC) - 1) /
-      static_cast<uint64_t>(WATCHDOG_DURATION_SEC);
-  static_assert(sleepTicksLargeVar != 0, "A sleep duration of 0 ticks is invalid!");
-  static_assert(sleepTicksLargeVar < 65536ULL,
-                "To long sleep duration specified!");
-  constexpr decltype(watchdogTicks) neededSleepTicks =
-      static_cast<uint16_t>(sleepTicksLargeVar);
+  decltype(watchdogTicks) neededSleepTicks =
+      duration_in_sec / WATCHDOG_DURATION_SEC;
+  uint8_t remainingSleepSecs = static_cast<uint8_t>(
+      duration_in_sec - (neededSleepTicks * WATCHDOG_DURATION_SEC));
 
   // disable ADC by clearing the enable bit
   ADCSRA &= ~_BV(ADEN);
@@ -72,12 +64,18 @@ void longSleep() {
   // Disable ALL modules
   PRR = 0xFF;
 
-  startWatchDogTimer();
-  do {
-    enterSleepMode();
-    ++watchdogTicks;
-  } while (watchdogTicks != neededSleepTicks);
-  stopWatchDogTimer();
+  if (neededSleepTicks != 0) {
+    startWatchDogTimer();
+    do {
+      enterSleepMode();
+      ++watchdogTicks;
+    } while (watchdogTicks != neededSleepTicks);
+    stopWatchDogTimer();
+  }
+  // use delay for the remaining seconds:
+  for (uint8_t i = 0; i < remainingSleepSecs; ++i) {
+    _delay_ms(1000);
+  }
 
   // Restore previous module power states
   PRR = prevPRR;

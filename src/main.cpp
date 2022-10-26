@@ -41,7 +41,8 @@ static inline bool waterTankNotEmpty(uint8_t pin, uint16_t min, uint16_t max,
   return !isEmpty;
 }
 
-static uint8_t checkMoisture(uint8_t idx, Status &status) {
+static uint8_t checkMoisture(uint8_t idx, Status &status,
+                             uint16_t &secondsPassed) {
   const auto pumpMask = pumpPwrMap[idx];
   const auto moistPin = moistSensPins[idx];
   const auto moistSensMask = moistSensPwrMap[idx];
@@ -70,10 +71,10 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
 
   // timeout to ensure we are not stuck here forever (and flood the plants) in
   // case of an defect sensor/pump
-  constexpr long measurementDuration =
-      (static_cast<long>(ADC_MEASUREMENTS) * (MEASURE_DELAY_MS));
+  constexpr uint32_t measurementDuration =
+      (static_cast<uint32_t>(ADC_MEASUREMENTS) * (MEASURE_DELAY_MS)*2);
   const uint8_t burstCycles =
-      (static_cast<long>(settings.burstDuration[idx]) * 1000 +
+      (static_cast<uint32_t>(settings.burstDuration[idx]) * 1000 +
        measurementDuration - 1) /
       measurementDuration;
 
@@ -99,8 +100,10 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
 
   bool soilIsTooDry = false;
   bool hasWaterLeft = false;
-  for (uint8_t burst = 0; burst < maxBursts; ++burst) {
-    for (uint8_t burstCycle = 0; burstCycle < burstCycles; ++burstCycle) {
+  uint8_t burst = 0;
+  uint8_t burstCycle = 0;
+  for (; burst < maxBursts; ++burst) {
+    for (; burstCycle < burstCycles; ++burstCycle) {
       soilIsTooDry = isSoilTooDry(moistPin, moistMin, moistMax, moistTarget,
                                   moistMeasurement, rawMoistMeasurement);
       hasWaterLeft = waterTankNotEmpty(waterPin, waterMin, waterMax, waterEmpty,
@@ -117,13 +120,13 @@ static uint8_t checkMoisture(uint8_t idx, Status &status) {
         }
       }
     }
+    burstCycle = 0;
 
     if (burstDelay > 0) {
       // Turn off the pump and wait approx. X seconds
       shiftReg.update(moistSensMask | waterSensMask);
-      for (uint8_t i = 0; i < burstDelay; ++i) {
-        _delay_ms(1000);
-      }
+      secondsPassed += burstDelay;
+      sleepSec(burstDelay);
     }
   }
 
@@ -132,6 +135,15 @@ stop_irrigation:
   shiftReg.disableOutput();
   shiftReg.update(0);
   shiftReg.enableOutput();
+
+  // also add the measurement delays to the seconds passed!
+  secondsPassed += static_cast<uint16_t>(
+      (static_cast<uint32_t>(burst * burstCycles + burstCycle) *
+       measurementDuration) /
+      1000);
+  // Less precise but faster measurement delay calculation
+  // secondsPassed += static_cast<uint16_t>(burst * burstCycles + burstCycle) *
+  //                  settings.burstDuration[idx];
 
   settings.hardwareFailure = soilIsTooDry && hasWaterLeft;
   initCheck();
@@ -353,6 +365,8 @@ void loop() {
   updateSettings(settings);
   deinitUnusedAnalogPins();
   powerDownEthernet(shiftReg);
+
+  uint16_t secondsPassed = 0;
   if (!settings.hardwareFailure) {
     bool statusChanged = false;
     setStatusUndef(status);
@@ -378,7 +392,7 @@ void loop() {
         // This ensures that the tick counter will overflow to 0 -> reset its
         // value!
         status.ticksSinceIrrigation[idx] = 255;
-        resCode |= checkMoisture(idx, status);
+        resCode |= checkMoisture(idx, status, secondsPassed);
       }
     }
 
@@ -421,6 +435,6 @@ void loop() {
     }
   }
   SERIALprintlnP(PSTR("Entering long sleep!"));
-  longSleep<SLEEP_PERIOD_MIN>();
+  sleepSec(SLEEP_PERIOD_MIN * 60 - secondsPassed);
 #endif
 }
