@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <cstring>
 #include <iostream>
 #include <memory>
@@ -33,13 +34,32 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
       break;
     }
     case REPORT_STATUS: {
-      std::scoped_lock lock(state.statusWrap.mut);
       if (readSize == sizeof(Status) + 1) {
         // TODO Pray that the byte order is correct!
-        state.statusWrap.unpublished = true;
-        std::memcpy(reinterpret_cast<void *>(&state.statusWrap.status),
-                    reinterpret_cast<const void *>(buf.get() + 1),
-                    sizeof(state.statusWrap.status));
+
+        // Only issue a status update iff the moisture of at least one plant
+        // changed!
+        bool changed = false;
+        uint8_t numPlants =
+            std::min(*(buf.get() + 1 + offsetof(Status, numPlants)),
+                     static_cast<uint8_t>(MAX_MOISTURE_SENSOR_COUNT));
+        const uint8_t *moistBefore =
+            buf.get() + 1 + offsetof(Status, beforeMoistureLevels);
+        const uint8_t *moistAfter =
+            buf.get() + 1 + offsetof(Status, afterMoistureLevels);
+        for (uint8_t i = 0; i < numPlants; ++i) {
+          if (moistBefore[i] < moistAfter[i]) {
+            changed = true;
+            break;
+          }
+        }
+        if (changed) {
+          std::scoped_lock lock(state.statusWrap.mut);
+          state.statusWrap.unpublished = true;
+          std::memcpy(reinterpret_cast<void *>(&state.statusWrap.status),
+                      reinterpret_cast<const void *>(buf.get() + 1),
+                      sizeof(state.statusWrap.status));
+        }
       } else {
         std::cerr << "Unexpected Status packet size of " << readSize
                   << " instead of " << (sizeof(Status) + 1) << std::endl;
