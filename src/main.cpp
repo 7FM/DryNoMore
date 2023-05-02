@@ -361,8 +361,9 @@ void loop() {
   // caps
   initAnalogPins();
   // allow remote to reset the hardware failure flag
-  powerUpEthernet(shiftReg);
-  updateSettings(settings);
+  if (powerUpEthernet(shiftReg)) {
+    updateSettings(settings);
+  }
   deinitUnusedAnalogPins();
   powerDownEthernet(shiftReg);
 
@@ -408,22 +409,22 @@ void loop() {
     // Only send messages if the status changed!
     if (statusChanged || settings.hardwareFailure || settings.debug) {
       SERIALprintlnP(PSTR("Send status updates!"));
-      powerUpEthernet(shiftReg);
-      if (statusChanged || settings.debug) {
-        sendStatus(status);
-        for (uint8_t i = 0; resCode != 0 && i < 2; ++i, resCode >>= 2) {
-          if (resCode & 0x02) {
-            sendErrorWaterEmpty(i);
-          } else if (resCode & 0x01) {
-            sendWarning(i);
+      if (powerUpEthernet(shiftReg)) {
+        if (statusChanged || settings.debug) {
+          sendStatus(status);
+          for (uint8_t i = 0; resCode != 0 && i < 2; ++i, resCode >>= 2) {
+            if (resCode & 0x02) {
+              sendErrorWaterEmpty(i);
+            } else if (resCode & 0x01) {
+              sendWarning(i);
+            }
           }
         }
+        if (settings.hardwareFailure) {
+          // Send HW error message!
+          sendErrorHardware(idx - 1);
+        }
       }
-      if (settings.hardwareFailure) {
-        // Send HW error message!
-        sendErrorHardware(idx - 1);
-      }
-
       powerDownEthernet(shiftReg);
     }
   } else {

@@ -49,7 +49,7 @@ Bit: Symbol: Description:
 #define W5500_OPM_ALL ((0b111) << 3)
 
 #ifndef ETH_PWR_MAPPING
-void powerUpEthernet();
+bool powerUpEthernet();
 void powerDownEthernet();
 void setupEthernet();
 #endif
@@ -72,7 +72,7 @@ void setupEthernet(
 #endif
 }
 
-void powerUpEthernet(
+bool powerUpEthernet(
 #ifdef ETH_PWR_MAPPING
     const ShiftReg &shiftReg
 #endif
@@ -99,7 +99,7 @@ void powerUpEthernet(
     if (Ethernet.hardwareStatus() == EthernetNoHardware) {
       SERIALprintlnP(PSTR("Ethernet shield was not found. Sorry, can't run "
                           "without hardware. :("));
-      return;
+      return false;
     }
     if (Ethernet.linkStatus() == LinkOFF) {
       SERIALprintlnP(PSTR("Ethernet cable is not connected."));
@@ -113,7 +113,14 @@ void powerUpEthernet(
   }
 
   SERIALprintlnP(PSTR("Connecting to local server."));
-  client.connect(serverIP, LOCAL_SERVER_PORT);
+  bool success = client.connect(serverIP, LOCAL_SERVER_PORT);
+  SERIALprintlnP(PSTR("  connection"));
+  if (success) {
+    SERIALprintlnP(PSTR("succeeded!"));
+  } else {
+    SERIALprintlnP(PSTR("failed!"));
+  }
+  return success;
 }
 
 void powerDownEthernet(
@@ -153,7 +160,7 @@ void powerDownEthernet(
 }
 
 #ifndef ETH_PWR_MAPPING
-void powerUpEthernet(const ShiftReg &shiftReg) { powerUpEthernet(); }
+bool powerUpEthernet(const ShiftReg &shiftReg) { return powerUpEthernet(); }
 void powerDownEthernet(const ShiftReg &shiftReg) { powerDownEthernet(); }
 void setupEthernet(const ShiftReg &shiftReg) { setupEthernet(); }
 #endif
