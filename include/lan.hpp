@@ -9,7 +9,7 @@
 #include "power_ctrl.hpp"
 
 void setupEthernet(const ShiftReg &shiftReg);
-void powerUpEthernet(const ShiftReg &shiftReg);
+bool powerUpEthernet(const ShiftReg &shiftReg);
 void powerDownEthernet(const ShiftReg &shiftReg);
 
 void sendStatus(const Status &status);
@@ -23,7 +23,7 @@ void sendErrorWaterEmpty(uint8_t waterSensIdx);
 void sendErrorHardware(uint8_t moistSensIdx);
 #else
 #define setupEthernet(...)
-#define powerUpEthernet(...)
+#define powerUpEthernet(...) return false
 #define powerDownEthernet(...)
 #define sendStatus(...)
 #define sendWarning(...)
