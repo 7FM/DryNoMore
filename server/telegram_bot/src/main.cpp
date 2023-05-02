@@ -118,6 +118,7 @@ namespace YAML {
       }
       node["numPlants"] = yaml_encode(set.numPlants);
       node["hardwareFailure"] = yaml_encode(set.hardwareFailure);
+      node["debug"] = yaml_encode(set.debug);
 
       return node;
     }
@@ -181,6 +182,7 @@ namespace YAML {
       set.hardwareFailure =
           node["hardwareFailure"]
               .as<yaml_dec_type_t<decltype(set.hardwareFailure)>>();
+      set.debug = node["debug"].as<yaml_dec_type_t<decltype(set.debug)>>();
 
       return true;
     }
@@ -274,6 +276,7 @@ int main(int argc, char **argv) {
 #warning "DEBUG settings activated, do not use in production!"
   state.settingsWrap.valid = true;
   state.settingsWrap.settings.hardwareFailure = false;
+  state.settingsWrap.settings.debug = false;
   state.settingsWrap.settings.numPlants = 2;
   state.settingsWrap.settings.sensConfs[0].minValue = 100;
   state.settingsWrap.settings.sensConfs[0].maxValue = 500;

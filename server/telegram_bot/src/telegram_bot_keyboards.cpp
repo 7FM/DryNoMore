@@ -362,6 +362,14 @@ KeyboardManager::KeyboardManager(Settings &settings,
           currentKb->callback(api, settings, query, currentKb);
         }
       });
+  auto toggleDebug = std::make_shared<Button>(
+      "Toggle Debug Mode", "toggle_debug_mode",
+      [](const TgBot::Api &api, Settings &settings,
+         TgBot::CallbackQuery::Ptr query, Keyboard *currentKb) {
+        settings.debug = settings.debug != true;
+        // update the message with the tables
+        currentKb->callback(api, settings, query, currentKb);
+      });
   auto commitBut = std::make_shared<Button>(
       "Commit settings", "commit_settings",
       [this, handleCommit](const TgBot::Api &api, Settings &,
@@ -392,7 +400,7 @@ KeyboardManager::KeyboardManager(Settings &settings,
 
   Keyboard::addRow(topLayer, {editPlantBut, editWaterBut});
   Keyboard::addRow(topLayer, {addPlantBut, removePlantBut});
-  Keyboard::addRow(topLayer, {clearHardwareFailure});
+  Keyboard::addRow(topLayer, {clearHardwareFailure, toggleDebug});
   Keyboard::addRow(topLayer, {commitBut, abortBut});
 
   // =================================================================

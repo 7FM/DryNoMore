@@ -167,8 +167,7 @@ std::string generateMoistSettingsTable(const Settings &settings) {
 
   printLeftWhitespace = {false, true, true, true, true};
   printRightWhitespace = {false, false, false, false, false};
-  row = {"ID", "Burst\nLen", "Burst\nDelay", "Max #\nBursts",
-         "Tick\nb/w\nWat"};
+  row = {"ID", "Burst\nLen", "Burst\nDelay", "Max #\nBursts", "Tick\nb/w\nWat"};
   table.push_back(std::move(row));
 
   for (int i = 0; i < settings.numPlants; ++i) {
@@ -188,6 +187,7 @@ std::string generateMoistSettingsTable(const Settings &settings) {
 std::string generateSettingsTable(const Settings &settings) {
   return (settings.hardwareFailure ? "Hardware Failure: true\n"
                                    : "Hardware Failure: false\n") +
+         (settings.debug ? "Debug Mode: true\n" : "Debug Mode: false\n") +
          generateMoistSettingsTable(settings) +
          generateWaterSettingsTable(settings);
 }

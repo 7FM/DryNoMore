@@ -19,4 +19,4 @@ PACKED_STRUCT_DEF(
     uint8_t ticksBetweenIrrigation[MAX_MOISTURE_SENSOR_COUNT]; uint8_t
         moistSensToWaterSensBitmap[((MAX_MOISTURE_SENSOR_COUNT) + 8 - 1) / 8];
     uint8_t skipBitmap[((MAX_MOISTURE_SENSOR_COUNT) + 8 - 1) / 8];
-    uint8_t numPlants; bool hardwareFailure;);
+    uint8_t numPlants; bool hardwareFailure; bool debug;);

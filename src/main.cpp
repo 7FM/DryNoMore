@@ -406,10 +406,10 @@ void loop() {
     }
 
     // Only send messages if the status changed!
-    if (statusChanged || settings.hardwareFailure) {
+    if (statusChanged || settings.hardwareFailure || settings.debug) {
       SERIALprintlnP(PSTR("Send status updates!"));
       powerUpEthernet(shiftReg);
-      if (statusChanged) {
+      if (statusChanged || settings.debug) {
         sendStatus(status);
         for (uint8_t i = 0; resCode != 0 && i < 2; ++i, resCode >>= 2) {
           if (resCode & 0x02) {
