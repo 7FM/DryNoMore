@@ -187,7 +187,8 @@ std::string generateMoistSettingsTable(const Settings &settings) {
 std::string generateSettingsTable(const Settings &settings) {
   return (settings.hardwareFailure ? "Hardware Failure: true\n"
                                    : "Hardware Failure: false\n") +
-         (settings.debug ? "Debug Mode: true\n" : "Debug Mode: false\n") +
+         std::string(settings.debug ? "Debug Mode: true\n"
+                                    : "Debug Mode: false\n") +
          generateMoistSettingsTable(settings) +
          generateWaterSettingsTable(settings);
 }
