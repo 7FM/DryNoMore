@@ -10,14 +10,17 @@
 // #define DUMP_WATER_LEVEL_MEASUREMENTS
 #endif
 
+// Enable debug serial prints
+#define DEBUG_SERIAL_PRINTS
+
 #if !defined(DUMP_SOIL_MOISTURES_MEASUREMENTS) &&                              \
     !defined(DUMP_WATER_LEVEL_MEASUREMENTS)
 // No serial needed
 #define DISABLE_SERIAL
 #else
 #warning "Running in setup mode, this won't irrigate your flowers!"
-#warning                                                                       \
-    "Disable both DUMP_SOIL_MOISTURES_MEASUREMENTS and DUMP_WATER_LEVEL_MEASUREMENTS in include/config.hpp to run in production mode"
+#warning "Disable both DUMP_SOIL_MOISTURES_MEASUREMENTS and "                       \
+    "DUMP_WATER_LEVEL_MEASUREMENTS in include/config.hpp to run in production mode"
 #endif
 
 #define USE_ETHERNET
@@ -58,6 +61,13 @@
 
 #define WATER_SENSOR_PINS                                                      \
   { A0, A1 }
+
+#ifdef DEBUG_SERIAL_PRINTS
+// Reactivate the serial port if we desire serial prints!
+#ifdef DISABLE_SERIAL
+#undef DISABLE_SERIAL
+#endif
+#endif
 
 #ifdef DISABLE_SERIAL
 #define FREE_DIGITAL_PINS                                                      \
@@ -137,3 +147,9 @@
   { 50, 50 }
 #define DEFAULT_WATER_EMPTY_THRESHOLDS                                         \
   { 20, 20 }
+
+#ifndef DISABLE_SERIAL
+#warning                                                                       \
+    "Disabling serial is strongly recommended in production mode to avoid "    \
+    "unnecessary runtime as well as power consumption!"
+#endif
