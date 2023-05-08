@@ -106,8 +106,9 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
           IosFlagSaver s(std::cout);
           for (unsigned i = 0; i < sizeof(state.settingsWrap.settings); ++i) {
             std::cout << "  " << std::hex
-                      << reinterpret_cast<const uint8_t *>(
-                             &state.settingsWrap.settings)[i]
+                      << static_cast<unsigned>(
+                             reinterpret_cast<const uint8_t *>(
+                                 &state.settingsWrap.settings)[i])
                       << std::endl;
           }
 #endif
