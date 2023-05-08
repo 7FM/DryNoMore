@@ -88,7 +88,7 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
       std::unique_lock lock(state.settingsWrap.mut);
       if (state.settingsWrap.valid) {
         // send current settings!
-        // TODO prey that the byte order is correct!
+        // TODO pray that the byte order is correct!
         int res =
             write(client_fd,
                   reinterpret_cast<const void *>(&state.settingsWrap.settings),
