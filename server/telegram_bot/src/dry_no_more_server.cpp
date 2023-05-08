@@ -48,9 +48,18 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
       Message::MessageType msgType = static_cast<Message::MessageType>(buf[0]);
       std::string str(reinterpret_cast<char *>(buf.get() + 1), readSize - 1);
       msgQueue.push(Message(std::move(str), msgType));
+
+#ifdef DEBUG_PRINTS
+      std::cout << "Received *_MSG request." << std::endl;
+      std::cout << "  MessageType: " << msgType << std::endl
+                << "  Message: " << str << std::endl;
+#endif
       break;
     }
     case REPORT_STATUS: {
+#ifdef DEBUG_PRINTS
+      std::cout << "Received REPORT_STATUS request." << std::endl;
+#endif
       if (readSize == sizeof(Status) + 1) {
         // Only issue a status update iff the moisture of at least one plant
         // changed or we are in debug mode!
@@ -90,6 +99,9 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
       break;
     }
     case REQUEST_SETTINGS: {
+#ifdef DEBUG_PRINTS
+      std::cout << "Received REQUEST_SETTINGS request." << std::endl;
+#endif
       std::unique_lock lock(state.settingsWrap.mut);
       if (state.settingsWrap.valid) {
         // send current settings!
@@ -120,6 +132,10 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
       } else {
         // We have no settings yet! -> unlock
         lock.unlock();
+#ifdef DEBUG_PRINTS
+        std::cout << "Settings are not valid, try receiving them from the MCU."
+                  << std::endl;
+#endif
         // send dummy response as indication that we want to receive the
         // settings ourselves!
         uint8_t dummyData = 42;
