@@ -210,7 +210,6 @@ void updateSettings(Settings &settings) {
       SERIALprintln(buf[i], HEX);
     }
   }
-  // TODO pray for no endianess issues
 }
 
 void sendErrorWaterEmpty(uint8_t waterSensIdx) {

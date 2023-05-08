@@ -52,8 +52,6 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
     }
     case REPORT_STATUS: {
       if (readSize == sizeof(Status) + 1) {
-        // TODO Pray that the byte order is correct!
-
         // Only issue a status update iff the moisture of at least one plant
         // changed!
         bool changed = false;
@@ -88,7 +86,6 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
       std::unique_lock lock(state.settingsWrap.mut);
       if (state.settingsWrap.valid) {
         // send current settings!
-        // TODO pray that the byte order is correct!
         int res =
             write(client_fd,
                   reinterpret_cast<const void *>(&state.settingsWrap.settings),
@@ -134,7 +131,6 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
         if (readSize == sizeof(Settings)) {
           lock.lock();
           state.settingsWrap.valid = true;
-          // TODO Pray that the byte order is correct!
           std::memcpy(reinterpret_cast<void *>(&state.settingsWrap.settings),
                       reinterpret_cast<const void *>(buf.get()),
                       sizeof(state.settingsWrap.settings));
