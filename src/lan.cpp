@@ -189,15 +189,26 @@ void updateSettings(Settings &settings) {
   buf[0] = REQUEST_SETTINGS;
   client.write(reinterpret_cast<const char *>(buf), 1);
   client.flush();
-  unsigned readBytes = client.read(buf, sizeof(settings));
-  if (readBytes < sizeof(settings)) {
+  for (uint8_t tries = 0; !client.available() && client.connected();
+       tries < 254; ++tries) {
+    // Busy wait for data with a timeout after 254 failed polls
+    SERIALprintlnP(PSTR("Waiting for a server response!"));
+  }
+  int readBytes = client.read(buf, sizeof(settings));
+  if (readBytes < 0) {
+    SERIALprintlnP(PSTR("Something went wrong reading the settings response! "
+                        "Keeping settings as is!"));
+  } else if (readBytes == 0) {
+    SERIALprintlnP(
+        PSTR("Tried to read the settings but connection was closed!"));
+  } else if (readBytes == 1) {
     // the server has no settings stored, yet -> sending our current settings to
     // the server
     client.write(reinterpret_cast<const char *>(&settings), sizeof(settings));
     client.flush();
     SERIALprintlnP(PSTR("Received no settings from the server, readBytes="));
     SERIALprintln(readBytes);
-  } else {
+  } else if (readBytes == static_cast<int>(sizeof(settings))) {
     // the server has settings stored -> update ours!
     memcpy(&settings, buf, sizeof(settings));
     SERIALprintlnP(PSTR("Received settings from the server!"));
@@ -209,6 +220,10 @@ void updateSettings(Settings &settings) {
       SERIALprintP(PSTR("  "));
       SERIALprintln(buf[i], HEX);
     }
+  } else {
+    SERIALprintP(PSTR("Error received unexpected amount of data: "));
+    SERIALprint(readBytes);
+    SERIALprintlnP(PSTR(" bytes!"));
   }
 }
 
