@@ -53,19 +53,26 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
     case REPORT_STATUS: {
       if (readSize == sizeof(Status) + 1) {
         // Only issue a status update iff the moisture of at least one plant
-        // changed!
-        bool changed = false;
-        uint8_t numPlants =
-            std::min(*(buf.get() + 1 + offsetof(Status, numPlants)),
-                     static_cast<uint8_t>(MAX_MOISTURE_SENSOR_COUNT));
-        const uint8_t *moistBefore =
-            buf.get() + 1 + offsetof(Status, beforeMoistureLevels);
-        const uint8_t *moistAfter =
-            buf.get() + 1 + offsetof(Status, afterMoistureLevels);
-        for (uint8_t i = 0; i < numPlants; ++i) {
-          if (moistBefore[i] < moistAfter[i]) {
-            changed = true;
-            break;
+        // changed or we are in debug mode!
+        bool changed;
+        {
+          std::scoped_lock lock(state.settingsWrap.mut);
+          changed =
+              state.settingsWrap.valid && state.settingsWrap.settings.debug;
+        }
+        if (!changed) {
+          uint8_t numPlants =
+              std::min(*(buf.get() + 1 + offsetof(Status, numPlants)),
+                       static_cast<uint8_t>(MAX_MOISTURE_SENSOR_COUNT));
+          const uint8_t *moistBefore =
+              buf.get() + 1 + offsetof(Status, beforeMoistureLevels);
+          const uint8_t *moistAfter =
+              buf.get() + 1 + offsetof(Status, afterMoistureLevels);
+          for (uint8_t i = 0; i < numPlants; ++i) {
+            if (moistBefore[i] < moistAfter[i]) {
+              changed = true;
+              break;
+            }
           }
         }
         if (changed) {
