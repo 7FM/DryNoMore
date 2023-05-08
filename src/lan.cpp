@@ -205,7 +205,7 @@ void updateSettings(Settings &settings) {
     SERIALprint(readBytes);
     SERIALprintP(PSTR("/"));
     SERIALprintln(sizeof(settings));
-    for (uint8_t i = 0; i < readBytes) {
+    for (uint8_t i = 0; i < readBytes; ++i) {
       SERIALprintP(PSTR("  "));
       SERIALprintln(buf[i], HEX);
     }
