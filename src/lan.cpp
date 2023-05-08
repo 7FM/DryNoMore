@@ -201,6 +201,14 @@ void updateSettings(Settings &settings) {
     // the server has settings stored -> update ours!
     memcpy(&settings, buf, sizeof(settings));
     SERIALprintlnP(PSTR("Received settings from the server!"));
+    SERIALprintP(PSTR("Setting bytes: "));
+    SERIALprint(readBytes);
+    SERIALprintP(PSTR("/"));
+    SERIALprintln(sizeof(settings));
+    for (uint8_t i = 0; i < readBytes) {
+      SERIALprintP(PSTR("  "));
+      SERIALprintln(buf[i], HEX);
+    }
   }
   // TODO pray for no endianess issues
 }

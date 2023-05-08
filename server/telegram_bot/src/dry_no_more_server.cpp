@@ -11,6 +11,23 @@
 #include "dry_no_more_server.hpp"
 #include "networking.hpp"
 
+// #define DEBUG_PRINTS
+
+#ifdef DEBUG_PRINTS
+class IosFlagSaver {
+public:
+  explicit IosFlagSaver(std::ostream &_ios) : ios(_ios), f(_ios.flags()) {}
+  ~IosFlagSaver() { ios.flags(f); }
+
+  IosFlagSaver(const IosFlagSaver &rhs) = delete;
+  IosFlagSaver &operator=(const IosFlagSaver &rhs) = delete;
+
+private:
+  std::ostream &ios;
+  std::ios::fmtflags f;
+};
+#endif
+
 static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
                                     StateWrapper &state,
                                     ts_queue<Message> &msgQueue, int client_fd,
@@ -82,7 +99,18 @@ static void processDryNoMoreRequest(std::unique_ptr<uint8_t[]> &buf,
         } else if (res != sizeof(state.settingsWrap.settings)) {
           std::cerr << "DryNoMore status server: WARNING written only " << res
                     << "/" << sizeof(state.settingsWrap.settings)
-                    << " of the settings bytes!";
+                    << " of the settings bytes!" << std::endl;
+#ifdef DEBUG_PRINTS
+        } else {
+          std::cout << "Successfully sent settings! Bytes:" << std::endl;
+          IosFlagSaver s(std::cout);
+          for (unsigned i = 0; i < sizeof(state.settingsWrap.settings); ++i) {
+            std::cout << "  " << std::hex
+                      << reinterpret_cast<const uint8_t *>(
+                             &state.settingsWrap.settings)[i]
+                      << std::endl;
+          }
+#endif
         }
       } else {
         // We have no settings yet! -> unlock
