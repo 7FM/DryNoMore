@@ -11,7 +11,7 @@
 #include "dry_no_more_server.hpp"
 #include "networking.hpp"
 
-#define DEBUG_PRINTS
+// #define DEBUG_PRINTS
 
 #ifdef DEBUG_PRINTS
 // Taken from here: https://stackoverflow.com/a/18822888
