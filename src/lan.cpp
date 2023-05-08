@@ -143,8 +143,8 @@ void powerDownEthernet(
   Ethernet.end();
 
 #ifdef ETH_PWR_MAPPING
-  // Ensure that no pin has a low level -> we want to power off the ethernet adapter!
-  // sadly this will turn the SCK LED on :/
+  // Ensure that no pin has a low level -> we want to power off the ethernet
+  // adapter! sadly this will turn the SCK LED on :/
   pinMode(/*D*/13, INPUT_PULLUP); /*SCK*/
   pinMode(/*D*/12, INPUT_PULLUP); /*MISO*/
   pinMode(/*D*/11, INPUT_PULLUP); /*MOSI*/
