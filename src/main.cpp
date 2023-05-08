@@ -166,6 +166,7 @@ static void disableDigitalOnAnalogPins() {
 
 static void powerSavingSettings() {
   // reduce the clock speed for a lower power consumption
+#ifndef DEBUG_NORMAL_CPU_SPEED
   noInterrupts();
   // To avoid unintentional changes of clock frequency, a special write
   // procedure must be followed to change the CLKPS bits:
@@ -177,6 +178,7 @@ static void powerSavingSettings() {
   // slow... 16 MHz / 256 = 62.5 kHz
   CLKPR = _BV(CLKPS3);
   interrupts();
+#endif
 
   // Turn off all unused modules:
   // NOTE that you can not use delay(), millis(), etc. afterwards!

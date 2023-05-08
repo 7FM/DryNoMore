@@ -114,7 +114,7 @@ bool powerUpEthernet(
 
   SERIALprintlnP(PSTR("Connecting to local server."));
   bool success = client.connect(serverIP, LOCAL_SERVER_PORT);
-  SERIALprintlnP(PSTR("  connection"));
+  SERIALprintP(PSTR("  connection"));
   if (success) {
     SERIALprintlnP(PSTR("succeeded!"));
   } else {
@@ -195,9 +195,12 @@ void updateSettings(Settings &settings) {
     // the server
     client.write(reinterpret_cast<const char *>(&settings), sizeof(settings));
     client.flush();
+    SERIALprintlnP(PSTR("Received no settings from the server, readBytes="));
+    SERIALprintln(readBytes);
   } else {
     // the server has settings stored -> update ours!
     memcpy(&settings, buf, sizeof(settings));
+    SERIALprintlnP(PSTR("Received settings from the server!"));
   }
   // TODO pray for no endianess issues
 }

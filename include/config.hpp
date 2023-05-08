@@ -11,7 +11,8 @@
 #endif
 
 // Enable debug serial prints
-#define DEBUG_SERIAL_PRINTS
+// #define DEBUG_SERIAL_PRINTS
+// #define DEBUG_NORMAL_CPU_SPEED
 
 #if !defined(DUMP_SOIL_MOISTURES_MEASUREMENTS) &&                              \
     !defined(DUMP_WATER_LEVEL_MEASUREMENTS)
@@ -42,7 +43,11 @@
 // Config
 
 // We can't increase the serial speed much with our low CPU frequency!
+#ifdef DEBUG_NORMAL_CPU_SPEED
+#define SERIAL_BAUD_RATE 9600
+#else
 #define SERIAL_BAUD_RATE 600
+#endif
 
 #define MEASURE_DELAY_MS 200
 #define POWER_ON_DELAY_MS 500
