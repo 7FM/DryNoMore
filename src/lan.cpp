@@ -189,8 +189,8 @@ void updateSettings(Settings &settings) {
   buf[0] = REQUEST_SETTINGS;
   client.write(reinterpret_cast<const char *>(buf), 1);
   client.flush();
-  for (uint8_t tries = 0; !client.available() && client.connected();
-       tries < 254; ++tries) {
+  for (uint8_t tries = 0;
+       !client.available() && client.connected() && tries < 254; ++tries) {
     // Busy wait for data with a timeout after 254 failed polls
     SERIALprintlnP(PSTR("Waiting for a server response!"));
   }
