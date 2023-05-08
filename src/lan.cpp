@@ -192,6 +192,7 @@ void updateSettings(Settings &settings) {
   for (uint8_t tries = 0;
        !client.available() && client.connected() && tries < 254; ++tries) {
     // Busy wait for data with a timeout after 254 failed polls
+    _delay_ms(10);
     SERIALprintlnP(PSTR("Waiting for a server response!"));
   }
   int readBytes = client.read(buf, sizeof(settings));
