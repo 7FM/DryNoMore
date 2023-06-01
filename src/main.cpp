@@ -72,7 +72,7 @@ static uint8_t checkMoisture(uint8_t idx, Status &status,
   // timeout to ensure we are not stuck here forever (and flood the plants) in
   // case of an defect sensor/pump
   constexpr uint32_t measurementDuration =
-      (static_cast<uint32_t>(ADC_MEASUREMENTS) * (MEASURE_DELAY_MS)*2);
+      (static_cast<uint32_t>(ADC_MEASUREMENTS) * (MEASURE_DELAY_MS));
   const uint8_t burstCycles =
       (static_cast<uint32_t>(settings.burstDuration[idx]) * 1000 +
        measurementDuration - 1) /
@@ -103,13 +103,19 @@ static uint8_t checkMoisture(uint8_t idx, Status &status,
   uint8_t burst = 0;
   uint8_t burstCycle = 0;
   for (; burst < maxBursts; ++burst) {
-    for (; burstCycle < burstCycles; ++burstCycle) {
-      soilIsTooDry = isSoilTooDry(moistPin, moistMin, moistMax, moistTarget,
-                                  moistMeasurement, rawMoistMeasurement);
-      hasWaterLeft = waterTankNotEmpty(waterPin, waterMin, waterMax, waterEmpty,
-                                       waterMeasurement, rawWaterMeasurement);
+    // Check soil moisture once, if it is too low, then irrigate a whole burst!
+    // After the wait time, check again. This avoids stopping the irrigation
+    // because the sensor is covered with water and the water does not
+    // immediately seep into the earth.
+    if (!(soilIsTooDry = isSoilTooDry(moistPin, moistMin, moistMax, moistTarget,
+                                      moistMeasurement, rawMoistMeasurement))) {
+      goto stop_irrigation;
+    }
 
-      if (!soilIsTooDry || !hasWaterLeft) {
+    for (; burstCycle < burstCycles; ++burstCycle) {
+      if (!(hasWaterLeft =
+                waterTankNotEmpty(waterPin, waterMin, waterMax, waterEmpty,
+                                  waterMeasurement, rawWaterMeasurement))) {
         goto stop_irrigation;
       }
 
@@ -138,7 +144,10 @@ stop_irrigation:
 
   // also add the measurement delays to the seconds passed!
   secondsPassed += static_cast<uint16_t>(
-      (static_cast<uint32_t>(burst * burstCycles + burstCycle) *
+      (static_cast<uint32_t>(
+           burst * (burstCycles +
+                    1 /*measuring the soil only once before every burst*/) +
+           burstCycle) *
        measurementDuration) /
       1000);
   // Less precise but faster measurement delay calculation
