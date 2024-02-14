@@ -44,7 +44,10 @@
         };
 
     in rec {
-      defaultPackage = drynomore-telegram-bot;
+      packages = rec {
+        drynomore = drynomore-telegram-bot;
+        default = drynomore;
+      };
       devShell = pkgs.mkShell {
         buildInputs = [
           drynomore-telegram-bot
